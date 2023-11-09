@@ -83,7 +83,7 @@ async function bootstrap() {
           maxsize: 5000000,
           format: winston.format.combine(
             winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-            winston.format.label({ label: 'foodfood' }),
+            winston.format.label({ label: 'project name' }), // 프로젝트 명 바꾸기
             winston.format.printf(({ level, message, timestamp }) => {
               return `${timestamp} [${level.toUpperCase()}] - ${message}`
             }),
@@ -98,7 +98,7 @@ async function bootstrap() {
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('asset')
-    .setDescription('The must-Go API description')
+    .setDescription('The asset API description')
     .setVersion('1.0')
     .addBearerAuth()
     .build()
