@@ -21,6 +21,12 @@ import {
 } from '@budget/domain/dto/budget.app.dto'
 import { JwtAuthGuard } from '@auth/infra/passport/guards/jwt.guard'
 import { Request } from 'express'
+import { CurrentUser } from '@common/decorators/user.decorator'
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger'
 
 @Controller('budgets')
 @UseGuards(JwtAuthGuard)
@@ -30,47 +36,59 @@ export class BudgetController {
     private readonly budegetService: IBudgetService,
   ) {}
 
+  @ApiOperation({
+    summary: '예산 설정',
+    description: '예산을 생성합니다.',
+  })
+  @ApiCreatedResponse({ description: 'success' })
   @Post()
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.CREATED)
   async createBudget(
-    @Req() req: Request,
+    @CurrentUser() user: string,
     @Body() budget: ReqBudgetDto,
   ): Promise<string> {
-    const userId = req.user.id
     const budgets = await this.budegetService.createBudget({
-      userId,
+      userId: user,
       ...budget,
     })
 
     return budgets
   }
 
+  @ApiOperation({
+    summary: '예산 설정 변경',
+    description: '예산 내용을 변경합니다.',
+  })
+  @ApiOkResponse({ description: 'ok' })
   @Put()
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.OK)
   async updateBudget(
-    @Req() req: Request,
+    @CurrentUser() user: string,
     @Body() budget: ReqBudgetDto,
   ): Promise<string> {
-    const userId = req.user.id
     const budgets = await this.budegetService.updateBudget({
-      userId,
+      userId: user,
       ...budget,
     })
     return budgets
   }
 
+  @ApiOperation({
+    summary: '예산 추천 내용',
+    description: '예산 추천 값을 불러옵니다.',
+  })
+  @ApiOkResponse({ description: 'ok' })
   @Get()
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.OK)
   async getMonthlybudget(
-    @Req() req: Request,
+    @CurrentUser() user: string,
     @Query() totalBudget: ReqRecommendBudgetDto,
   ): Promise<object> {
-    const userId = req.user.id
     const recommendBudget = await this.budegetService.recommendBudget({
-      userId,
+      userId: user,
       ...totalBudget,
     })
     return recommendBudget

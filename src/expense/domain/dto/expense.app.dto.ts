@@ -11,7 +11,7 @@ import { Type } from 'class-transformer'
 import { UUID } from 'crypto'
 
 export class ReqExpenseDto {
-  readonly userId: UUID
+  readonly userId: string
 
   @IsNotEmpty({ message: '지출 금액은 필수적으로 입력해야 합니다.' })
   @IsNumber()
@@ -32,7 +32,7 @@ export class ReqExpenseDto {
 }
 
 export class ReqMonthlyDto {
-  readonly userId: UUID
+  readonly userId: string
   @IsNotEmpty({ message: '지출 월은 필수적으로 입력해야 합니다.' })
   readonly month: string
 }
@@ -44,7 +44,7 @@ export class ResGetExpenseDto {
   classification: string
 }
 export class ReqDetailExpenseDto {
-  userId: UUID
+  userId: string
   id: number
 }
 export class ResDetailExpenseDto {
@@ -55,7 +55,7 @@ export class ResDetailExpenseDto {
 }
 
 export class ReqClassificationExpenseDto {
-  userId: UUID
+  userId: string
 }
 
 export class ResClassificationExpenseDto {

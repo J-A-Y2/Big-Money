@@ -15,8 +15,6 @@ import { ExpenseModule } from '@expense/interface/expense.module'
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      // validationSchema,
-      load: [],
       cache: true,
       envFilePath: [
         process.env.NODE_ENV === 'production'

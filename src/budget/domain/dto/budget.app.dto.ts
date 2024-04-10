@@ -8,7 +8,7 @@ import { Transform } from 'class-transformer'
 import { Classification } from '@classification/domain/classification.entity'
 
 export class ReqBudgetDto {
-  readonly userId: UUID
+  readonly userId: string
 
   @IsNotEmpty({ message: '월 예산은 필수적으로 입력해야 합니다.' })
   readonly month: string
@@ -21,7 +21,7 @@ export class ReqBudgetDto {
 }
 
 export class ReqRecommendBudgetDto {
-  readonly userId: UUID
+  readonly userId: string
 
   @IsNotEmpty({ message: '월 예산은 필수적으로 입력해야 합니다.' })
   readonly month: string

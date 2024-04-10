@@ -5,13 +5,11 @@ import {
 } from '@common/messages/user/user.errors'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { IUserRepository } from '@user/domain/interface/user.repository.interface'
-import { ICacheService } from '@cache/cache.service.interface'
 import {
   ReqRegisterAppDto,
   ReqUpdateUserAppDto,
 } from '@user/domain/dto/register.app.dto'
 import {
-  ICACHE_SERVICE,
   IPASSWORD_HASHER,
   IUSER_REPOSITORY,
 } from '@common/constants/provider.constant'
@@ -27,8 +25,6 @@ export class UserService implements IUserService {
     private readonly logger: Logger,
     @Inject(IUSER_REPOSITORY)
     private readonly userRepository: IUserRepository,
-    @Inject(ICACHE_SERVICE)
-    private readonly cacheService: ICacheService,
     @Inject(IPASSWORD_HASHER)
     private readonly passwordHasher: IPasswordHasher,
   ) {}
@@ -61,13 +57,13 @@ export class UserService implements IUserService {
     return createdUser
   }
 
-  async updateUser(userId: string, req: ReqUpdateUserAppDto): Promise<object> {
+  async updateUser(userId: string, body: ReqUpdateUserAppDto): Promise<object> {
     const existingUser = await this.userRepository.findById(userId)
 
     if (!existingUser) {
       throw new ConflictException(USER_NOT_FOUND)
     }
-    const updatedUser = await this.userRepository.updateUser(userId, req)
+    const updatedUser = await this.userRepository.updateUser(userId, body)
 
     return { message: '유저 정보 업데이트에 성공했습니다', updatedUser }
   }

@@ -23,6 +23,12 @@ import {
   IHANDLE_DATE_TIME,
 } from '@common/constants/provider.constant'
 import * as useragent from 'useragent' // User-Agent 문자열을 파싱
+import { CurrentUser } from '@common/decorators/user.decorator'
+import {
+  ApiOperation,
+  ApiCreatedResponse,
+  ApiOkResponse,
+} from '@nestjs/swagger'
 
 @Controller('auth')
 export class AuthController {
@@ -33,13 +39,18 @@ export class AuthController {
     private readonly handleDateTime: IHandleDateTime,
   ) {}
 
-  @Get('status')
-  @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtAuthGuard)
-  async validateLoggedIn() {
-    return true
-  }
+  // @Get('status')
+  // @HttpCode(HttpStatus.OK)
+  // @UseGuards(JwtAuthGuard)
+  // async validateLoggedIn() {
+  //   return true
+  // }
 
+  @ApiOperation({
+    summary: '로그인',
+    description: '로그인을 합니다.',
+  })
+  @ApiOkResponse({ description: 'ok' })
   @Post('login')
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(LocalAuthGuard)
@@ -71,19 +82,32 @@ export class AuthController {
         jwtExpiration.refreshTokenExpirationDays,
       ),
     })
-    res.send()
+    res.send('ok')
   }
 
+  @ApiOperation({
+    summary: '로그아웃',
+    description: '로그아웃을 합니다.',
+  })
+  @ApiOkResponse({ description: 'ok' })
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard)
-  async logout(@Req() req: Request, @Res() res: Response): Promise<void> {
-    await this.authService.logout({ id: req.user.id })
-    res.clearCookie('accessToken')
-    res.clearCookie('refreshToken')
-    res.send()
+  async logout(
+    @CurrentUser() user: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    await this.authService.logout({ id: user })
+    res.clearCookie('accessToken', { httpOnly: true })
+    res.clearCookie('refreshToken', { httpOnly: true })
+    res.send('ok')
   }
 
+  @ApiOperation({
+    summary: '리프레쉬 토큰 확인',
+    description: '새로운 토큰을 발급합니다',
+  })
+  @ApiOkResponse({ description: 'ok' })
   @Post('refresh')
   @HttpCode(HttpStatus.CREATED)
   async refresh(@Req() req: Request, @Res() res: Response): Promise<void> {
@@ -94,8 +118,6 @@ export class AuthController {
       const browser = os.family
       const platform = os.os.family
       const version = `${os.major}.${os.minor}.${os.patch}`
-
-      console.log(platform)
 
       const { accessToken } = await this.authService.refresh({
         refreshToken,
@@ -112,22 +134,24 @@ export class AuthController {
       })
       res.send()
     } catch (error) {
-      res.clearCookie('accessToken')
-      res.clearCookie('refreshToken')
-      res.send()
+      res.clearCookie('accessToken', { httpOnly: true })
+      res.clearCookie('refreshToken', { httpOnly: true })
+      res.send('ok')
     }
   }
 
+  @ApiOperation({
+    summary: '비밀번호 확인',
+    description: '비밀번호를 확인합니다.',
+  })
+  @ApiOkResponse({ description: 'ok' })
   @Post('check-password')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard)
   async checkPassword(
-    @Req() req: Request,
+    @CurrentUser() user: string,
     @Body() body: ReqCheckPasswordDto,
   ): Promise<void> {
-    await this.authService.checkPassword({
-      id: req.user.id,
-      password: body.password,
-    })
+    await this.authService.checkPassword({ id: user, password: body.password })
   }
 }
