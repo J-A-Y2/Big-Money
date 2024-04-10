@@ -34,7 +34,11 @@ import { JwtAuthGuard } from '@auth/infra/passport/guards/jwt.guard'
 import { Request } from 'express'
 import { config } from 'rxjs'
 import { IRecommendationService } from '@expense/app/recommendation.service.interface'
-import { ApiOperation } from '@nestjs/swagger'
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger'
 import { CurrentUser } from '@common/decorators/user.decorator'
 
 @UseGuards(JwtAuthGuard)
@@ -47,65 +51,78 @@ export class ExpenseController {
     private readonly recommendationService: IRecommendationService,
   ) {}
 
+  @ApiOperation({
+    summary: '지출 생성',
+  })
+  @ApiCreatedResponse({ description: 'success' })
   @Post()
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.CREATED)
   async createExpense(
-    @Req() req: Request,
+    @CurrentUser() user: string,
     @Body() expense: ReqExpenseDto,
   ): Promise<string> {
-    const userId = req.user.id
     const expenses = await this.expenseService.createExpense({
-      userId,
+      userId: user,
       ...expense,
     })
     return expenses
   }
 
   @ApiOperation({ summary: '오늘 지출 추천 API' })
+  @ApiOkResponse({ description: 'ok' })
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.OK)
   @Get('recommendExpenditure')
   async getRecommendExpenditure(
-    @Req() req: Request,
+    @CurrentUser() user: string,
     @Query() month: ReqMonthlyDto,
   ) {
-    const userId = req.user.id
     const result = await this.recommendationService.recommendExpenditure({
-      userId,
+      userId: user,
       ...month,
     })
     return result
   }
 
   @ApiOperation({ summary: '오늘 지출량 안내 API' })
+  @ApiOkResponse({ description: 'ok' })
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.OK)
   @Get('todayUsage')
-  async getTodayUsage(@Req() req: Request, @Query() month: ReqMonthlyDto) {
-    const userId = req.user.id
+  async getTodayUsage(
+    @CurrentUser() user: string,
+    @Query() month: ReqMonthlyDto,
+  ) {
     const result = await this.recommendationService.todayUsage({
-      userId,
+      userId: user,
       ...month,
     })
     return result
   }
 
+  @ApiOperation({
+    summary: '지출 내역을 한달 단위로 불러옵니다.',
+  })
+  @ApiOkResponse({ description: 'ok' })
   @Get()
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.OK)
   async getMonthlyExpense(
-    @Req() req: Request,
+    @CurrentUser() user: string,
     @Query() month: ReqMonthlyDto,
   ): Promise<object> {
-    const userId = req.user.id
     const monthlyExpenses = await this.expenseService.getMonthlyExpense({
-      userId,
+      userId: user,
       ...month,
     })
     return monthlyExpenses
   }
 
+  @ApiOperation({
+    summary: '한달 전체 지출 내역을 리스트 형태로 불러옵니다.',
+  })
+  @ApiOkResponse({ description: 'ok' })
   @Get('list')
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.OK)
@@ -120,6 +137,10 @@ export class ExpenseController {
     return getAllExpense
   }
 
+  @ApiOperation({
+    summary: '지출 내역을 카테로리별로 묶어서 불러옵니다.',
+  })
+  @ApiOkResponse({ description: 'ok' })
   @Get('classification')
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.OK)
@@ -135,6 +156,11 @@ export class ExpenseController {
     return getTotalExpenseByClassification
   }
 
+  @ApiOperation({
+    summary: '지출 내용 불러오기',
+    description: '지출 내역을 불러옵니다.',
+  })
+  @ApiOkResponse({ description: 'ok' })
   @Get(':id')
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.OK)
