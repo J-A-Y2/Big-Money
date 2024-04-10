@@ -5,22 +5,27 @@ import {
   Inject,
   HttpStatus,
   Controller,
-  Response,
-  Put,
-  Req,
   UseGuards,
   UsePipes,
   ValidationPipe,
   Delete,
   Patch,
+  UseInterceptors,
 } from '@nestjs/common'
 import { ReqRegisterDto, ReqUpdateDto } from './dto/registerUserDto'
 import { IUSER_SERVICE } from '@common/constants/provider.constant'
 import { IUserService } from '@user/domain/interface/user.service.interface'
-import { User } from '@user/domain/entity/user.entity'
-import { Request } from 'express'
 import { JwtAuthGuard } from '@auth/infra/passport/guards/jwt.guard'
+import { CurrentUser } from '@common/decorators/user.decorator'
+import {
+  ApiOperation,
+  ApiCreatedResponse,
+  ApiOkResponse,
+} from '@nestjs/swagger'
+import { UUID } from 'crypto'
+import { UndefinedToNullInterceptor } from '@common/interceptors/undefinedToNull.interceptor'
 
+@UseInterceptors(UndefinedToNullInterceptor)
 @Controller('users')
 export class UserController {
   constructor(
@@ -28,30 +33,43 @@ export class UserController {
     private readonly userService: IUserService,
   ) {}
 
+  @ApiOperation({
+    summary: '회원가입',
+    description: '유저를 등록합니다.',
+  })
+  @ApiCreatedResponse({ description: 'success' })
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async register(@Body() user: ReqRegisterDto, @Response() res): Promise<User> {
-    return await this.userService.register(user)
+  async register(@Body() body: ReqRegisterDto): Promise<void> {
+    await this.userService.register(body)
   }
 
+  @ApiOperation({
+    summary: '유저 정보 수정',
+    description: '유저 정보를 수정합니다.',
+  })
+  @ApiOkResponse({ description: 'ok' })
   @Patch()
   @UseGuards(JwtAuthGuard)
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.OK)
   async update(
-    @Req() req: Request,
-    @Body() user: ReqUpdateDto,
+    @CurrentUser() user: string,
+    @Body() body: ReqUpdateDto,
   ): Promise<object> {
-    const userId = req.user.id
-    return await this.userService.updateUser(userId, user)
+    return await this.userService.updateUser(user, body)
   }
 
+  @ApiOperation({
+    summary: '유저 정보 삭제',
+    description: '유저 정보를 삭제합니다.',
+  })
+  @ApiOkResponse({ description: 'ok' })
   @Delete()
   @UseGuards(JwtAuthGuard)
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.OK)
-  async delete(@Req() req: Request): Promise<object> {
-    const userId = req.user.id
-    return await this.userService.deleteUser(userId)
+  async delete(@CurrentUser() user: string): Promise<object> {
+    return await this.userService.deleteUser(user)
   }
 }

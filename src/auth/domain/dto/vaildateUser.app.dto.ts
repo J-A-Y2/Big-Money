@@ -1,5 +1,3 @@
-import { UUID } from 'crypto'
-
 export class ReqValidateUserAppDto {
   readonly email: string
   readonly password: string

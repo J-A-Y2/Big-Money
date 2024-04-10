@@ -106,7 +106,7 @@ async function bootstrap() {
     .build()
 
   const document = SwaggerModule.createDocument(app, swaggerConfig)
-  SwaggerModule.setup('swagger', app, document)
+  SwaggerModule.setup('asset', app, document)
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -117,7 +117,6 @@ async function bootstrap() {
   )
 
   const configService = app.get(ConfigService)
-
   const port = configService.get('PORT') || 3000
   await app.listen(port)
   Logger.log(`Application running on port ${port}`)

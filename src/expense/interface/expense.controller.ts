@@ -35,6 +35,7 @@ import { Request } from 'express'
 import { config } from 'rxjs'
 import { IRecommendationService } from '@expense/app/recommendation.service.interface'
 import { ApiOperation } from '@nestjs/swagger'
+import { CurrentUser } from '@common/decorators/user.decorator'
 
 @UseGuards(JwtAuthGuard)
 @Controller('expenses')
@@ -109,12 +110,11 @@ export class ExpenseController {
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.OK)
   async getAllExpense(
-    @Req() req: Request,
+    @CurrentUser() user: string,
     @Query() month: ReqMonthlyDto,
   ): Promise<ResGetExpenseDto[]> {
-    const userId = req.user.id
     const getAllExpense = await this.expenseService.getAllExpense({
-      userId,
+      userId: user,
       ...month,
     })
     return getAllExpense
@@ -124,13 +124,12 @@ export class ExpenseController {
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.OK)
   async getTotalExpenseByClassification(
-    @Req() req: Request,
+    @CurrentUser() user: string,
     @Query() month: ReqMonthlyDto,
   ): Promise<ResClassificationExpenseDto[]> {
-    const userId = req.user.id
     const getTotalExpenseByClassification =
       await this.expenseService.getTotalExpenseByClassification({
-        userId,
+        userId: user,
         ...month,
       })
     return getTotalExpenseByClassification
@@ -140,11 +139,10 @@ export class ExpenseController {
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.OK)
   async getExpense(
-    @Req() req: Request,
+    @CurrentUser() user: string,
     @Param('id', ParseIntPipe) expenseId: number,
   ): Promise<ResDetailExpenseDto> {
-    const userId = req.user.id
-    const getExpense = await this.expenseService.getExpense(expenseId, userId)
+    const getExpense = await this.expenseService.getExpense(expenseId, user)
     return getExpense
   }
 

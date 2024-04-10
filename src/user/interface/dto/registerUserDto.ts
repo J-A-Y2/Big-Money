@@ -17,39 +17,49 @@ import {
   USER_PWD_EXAMPLE,
 } from '@common/constants/user.constant'
 import { USER_ALREADY_EXIST } from '@common/messages/user/user.errors'
+import { ApiProperty } from '@nestjs/swagger'
 
 export class ReqRegisterDto {
+  @ApiProperty()
   @IsEmail({}, { message: VALIDATE_EMAIL })
   @Transform(({ value }) => value.toLowerCase())
   readonly email: string
 
+  @ApiProperty()
   @IsString()
   @Matches(/^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,20}$/, {
     message: VALIDATE_PASSWORD,
   })
   readonly password: string
 
+  @ApiProperty()
   @IsString()
   readonly name: string
 
+  @ApiProperty()
   @IsString()
   readonly nickname: string
 
+  @ApiProperty()
   @IsDateString()
   readonly birthdate: Date
 
+  @ApiProperty()
   @IsInt()
   readonly age: number
 
+  @ApiProperty()
   @IsString()
   readonly gender: string
 }
 export class ReqUpdateDto {
   readonly userId: string
 
+  @ApiProperty()
   @IsString()
   readonly name: string
 
+  @ApiProperty()
   @IsString()
   readonly nickname: string
 }

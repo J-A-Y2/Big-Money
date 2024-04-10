@@ -57,13 +57,13 @@ export class UserService implements IUserService {
     return createdUser
   }
 
-  async updateUser(userId: string, req: ReqUpdateUserAppDto): Promise<object> {
+  async updateUser(userId: string, body: ReqUpdateUserAppDto): Promise<object> {
     const existingUser = await this.userRepository.findById(userId)
 
     if (!existingUser) {
       throw new ConflictException(USER_NOT_FOUND)
     }
-    const updatedUser = await this.userRepository.updateUser(userId, req)
+    const updatedUser = await this.userRepository.updateUser(userId, body)
 
     return { message: '유저 정보 업데이트에 성공했습니다', updatedUser }
   }
