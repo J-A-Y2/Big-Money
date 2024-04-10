@@ -20,14 +20,15 @@ import {
   ReqRecommendBudgetDto,
 } from '@budget/domain/dto/budget.app.dto'
 import { JwtAuthGuard } from '@auth/infra/passport/guards/jwt.guard'
-import { Request } from 'express'
 import { CurrentUser } from '@common/decorators/user.decorator'
 import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiTags,
 } from '@nestjs/swagger'
 
+@ApiTags('BUDGET')
 @Controller('budgets')
 @UseGuards(JwtAuthGuard)
 export class BudgetController {
@@ -63,16 +64,15 @@ export class BudgetController {
   @ApiOkResponse({ description: 'ok' })
   @Put()
   @UsePipes(ValidationPipe)
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.NO_CONTENT)
   async updateBudget(
     @CurrentUser() user: string,
     @Body() budget: ReqBudgetDto,
-  ): Promise<string> {
-    const budgets = await this.budegetService.updateBudget({
+  ): Promise<void> {
+    await this.budegetService.updateBudget({
       userId: user,
       ...budget,
     })
-    return budgets
   }
 
   @ApiOperation({

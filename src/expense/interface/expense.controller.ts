@@ -3,12 +3,9 @@ import {
   Body,
   Get,
   Post,
-  Put,
   Inject,
   UseGuards,
-  Req,
   HttpCode,
-  Res,
   HttpStatus,
   UsePipes,
   ValidationPipe,
@@ -22,8 +19,6 @@ import {
   IRECOMMENDATION_SERVICE,
 } from '@common/constants/provider.constant'
 import {
-  ReqClassificationExpenseDto,
-  ReqDetailExpenseDto,
   ReqExpenseDto,
   ReqMonthlyDto,
   ResClassificationExpenseDto,
@@ -31,16 +26,16 @@ import {
   ResGetExpenseDto,
 } from '@expense/domain/dto/expense.app.dto'
 import { JwtAuthGuard } from '@auth/infra/passport/guards/jwt.guard'
-import { Request } from 'express'
-import { config } from 'rxjs'
 import { IRecommendationService } from '@expense/app/recommendation.service.interface'
 import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiTags,
 } from '@nestjs/swagger'
 import { CurrentUser } from '@common/decorators/user.decorator'
 
+@ApiTags('BUDGET')
 @UseGuards(JwtAuthGuard)
 @Controller('expenses')
 export class ExpenseController {

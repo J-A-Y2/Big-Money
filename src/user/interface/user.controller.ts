@@ -21,11 +21,13 @@ import {
   ApiOperation,
   ApiCreatedResponse,
   ApiOkResponse,
+  ApiTags,
 } from '@nestjs/swagger'
 import { UUID } from 'crypto'
 import { UndefinedToNullInterceptor } from '@common/interceptors/undefinedToNull.interceptor'
 
 @UseInterceptors(UndefinedToNullInterceptor)
+@ApiTags('USER')
 @Controller('users')
 export class UserController {
   constructor(
@@ -52,12 +54,12 @@ export class UserController {
   @Patch()
   @UseGuards(JwtAuthGuard)
   @UsePipes(ValidationPipe)
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.NO_CONTENT)
   async update(
     @CurrentUser() user: string,
     @Body() body: ReqUpdateDto,
-  ): Promise<object> {
-    return await this.userService.updateUser(user, body)
+  ): Promise<void> {
+    await this.userService.updateUser(user, body)
   }
 
   @ApiOperation({
@@ -68,8 +70,8 @@ export class UserController {
   @Delete()
   @UseGuards(JwtAuthGuard)
   @UsePipes(ValidationPipe)
-  @HttpCode(HttpStatus.OK)
-  async delete(@CurrentUser() user: string): Promise<object> {
-    return await this.userService.deleteUser(user)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async delete(@CurrentUser() user: string): Promise<void> {
+    await this.userService.deleteUser(user)
   }
 }
