@@ -13,7 +13,6 @@ import {
 import { LocalAuthGuard } from '@auth/infra/passport/guards/local.guard'
 import { Request, Response } from 'express'
 import { JwtAuthGuard } from '@auth/infra/passport/guards/jwt.guard'
-import { ReqLoginDto } from './dto/login.dto.'
 import { IAuthService } from '@auth/domain/interfaces/auth.service.interface'
 import { ReqCheckPasswordDto } from './dto/checkPassword.dto'
 import { jwtExpiration } from '@common/configs/jwt.config'
@@ -28,8 +27,10 @@ import {
   ApiOperation,
   ApiCreatedResponse,
   ApiOkResponse,
+  ApiTags,
 } from '@nestjs/swagger'
 
+@ApiTags('AUTH')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -39,12 +40,12 @@ export class AuthController {
     private readonly handleDateTime: IHandleDateTime,
   ) {}
 
-  // @Get('status')
-  // @HttpCode(HttpStatus.OK)
-  // @UseGuards(JwtAuthGuard)
-  // async validateLoggedIn() {
-  //   return true
-  // }
+  @Get('status')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  async validateLoggedIn() {
+    return true
+  }
 
   @ApiOperation({
     summary: '로그인',

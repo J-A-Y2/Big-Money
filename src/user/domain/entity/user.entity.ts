@@ -55,7 +55,7 @@ export class User extends BaseEntity {
 
   @DeleteDateColumn()
   @Expose()
-  deleteAt: Date
+  deleteAt: Date | null
 
   // @Column({ nullable: false, type: 'varchar', default: '' })
   // @Expose()

@@ -9,7 +9,7 @@ import { OAuthFlowObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.i
 
 export interface IExpenseRepository {
   createExpense(
-    userId: UUID,
+    userId: string,
     classificationId: number,
     budgetId: number,
     date: Date,
@@ -17,12 +17,12 @@ export interface IExpenseRepository {
     memo: string,
     exception: boolean,
   ): Promise<object>
-  getTotalMonthlyExpense(userId: UUID, date: Date): Promise<object>
-  getWeeklyExpense(userId: UUID, date: Date): Promise<object>
-  getAllExpense(userId: UUID, date: Date): Promise<Expense[]>
-  getExpense(userId: UUID, expenseId: number): Promise<ResDetailExpenseDto>
+  getTotalMonthlyExpense(userId: string, date: Date): Promise<object>
+  getWeeklyExpense(userId: string, date: Date): Promise<object>
+  getAllExpense(userId: string, date: Date): Promise<Expense[]>
+  getExpense(userId: string, expenseId: number): Promise<ResDetailExpenseDto>
   getTotalExpenseByClassification(
-    userId: UUID,
+    userId: string,
     month: Date,
   ): Promise<ResClassificationExpenseDto[]>
 }
