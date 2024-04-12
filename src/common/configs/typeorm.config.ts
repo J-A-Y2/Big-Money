@@ -17,9 +17,11 @@ export const typeORMConfig = async (
     password: configService.get<string>('DB_PASSWORD') || '0000',
     database: configService.get<string>('DB_DATABASE') || 'postgres',
     entities: [User, Expense, Budget, Classification], // 상대경로 지정 확실히 하기!
+    autoLoadEntities: true,
     synchronize: configService.get<boolean>('DB_SYNCHRONIZE') || false,
     namingStrategy: new SnakeNamingStrategy(),
-    logging: false, // 이 부분을 추가하여 디버그 로깅을 활성화합니다.
+    logging: true, // 이 부분을 추가하여 디버그 로깅을 활성화합니다.
+    keepConnectionAlive: true,
     // logger: 'debug',
   }
 }

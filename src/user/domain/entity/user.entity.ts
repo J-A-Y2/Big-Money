@@ -10,37 +10,78 @@ import {
 } from 'typeorm'
 import { Exclude, Expose } from 'class-transformer'
 import { Expense } from '@expense/infra/db/expense.entity'
+import { ApiProperty } from '@nestjs/swagger'
 
 @Entity()
 export class User extends BaseEntity {
+  @ApiProperty({
+    example: 'test@test.com',
+    description: '이메일',
+    required: true,
+  })
   @PrimaryGeneratedColumn('uuid')
   @Expose()
   id: string
 
+  @ApiProperty({
+    example: 'test@test.com',
+    description: '이메일',
+    required: true,
+  })
   @Column({ length: 15 })
   @Expose()
   email: string
 
+  @ApiProperty({
+    example: 'Password1234!',
+    description: '비밀번호',
+    required: true,
+  })
   @Column()
   @Exclude()
   password: string
 
+  @ApiProperty({
+    example: '홍길동',
+    description: '이름',
+    required: true,
+  })
   @Column({ nullable: false })
   @Expose()
   name: string
 
+  @ApiProperty({
+    example: '부자부자',
+    description: '닉네임',
+    required: true,
+  })
   @Column()
   @Expose()
   nickname: string
 
+  @ApiProperty({
+    example: '1997-01-01',
+    description: '생년월일',
+    required: true,
+  })
   @Column()
   @Expose()
   birthdate: Date
 
+  @ApiProperty({
+    example: '26',
+    description: '나이',
+    required: true,
+  })
   @Column()
   @Expose()
   age: number
 
+  @ApiProperty({
+    example: '남',
+    description: '성별',
+    required: true,
+  })
   @Column()
   @Expose()
   gender: string

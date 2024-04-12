@@ -1,4 +1,4 @@
-import { NestFactory } from '@nestjs/core'
+import { NestApplication, NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
 import { ConfigService } from '@nestjs/config'
 import { ValidationPipe, Logger } from '@nestjs/common'
@@ -7,11 +7,14 @@ import { WinstonModule } from 'nest-winston'
 import * as winston from 'winston'
 import * as moment from 'moment'
 import * as cookieParser from 'cookie-parser'
+import { HttpExceptionFilter } from './httpException.filter'
+import { NestExpressApplication } from '@nestjs/platform-express'
+import path from 'path'
 
 declare const module: any
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: WinstonModule.createLogger({
       transports: [
         new winston.transports.Console({
@@ -95,8 +98,19 @@ async function bootstrap() {
     }),
   })
 
-  app.enableCors()
+  app.useGlobalFilters(new HttpExceptionFilter())
+  app.enableCors({ origin: true, credentials: true })
+  app.useStaticAssets(path.join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads',
+  })
   app.use(cookieParser())
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      skipMissingProperties: true,
+    }),
+  )
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('asset')
@@ -107,14 +121,6 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, swaggerConfig)
   SwaggerModule.setup('asset', app, document)
-
-  app.useGlobalPipes(
-    new ValidationPipe({
-      transform: true,
-      whitelist: true,
-      skipMissingProperties: true,
-    }),
-  )
 
   const configService = app.get(ConfigService)
   const port = configService.get('PORT') || 3000
