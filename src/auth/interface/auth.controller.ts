@@ -21,14 +21,9 @@ import {
   IAUTH_SERVICE,
   IHANDLE_DATE_TIME,
 } from '@common/constants/provider.constant'
-import * as useragent from 'useragent' // User-Agent 문자열을 파싱
 import { CurrentUser } from '@common/decorators/user.decorator'
-import {
-  ApiOperation,
-  ApiCreatedResponse,
-  ApiOkResponse,
-  ApiTags,
-} from '@nestjs/swagger'
+import { ApiOperation, ApiOkResponse, ApiTags } from '@nestjs/swagger'
+import { getDeviceInfo } from '@common/utils/deviceInfo'
 
 @ApiTags('AUTH')
 @Controller('auth')
@@ -56,15 +51,10 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(LocalAuthGuard)
   async login(@Req() req: Request, @Res() res: Response): Promise<void> {
-    const os = useragent.parse(req.headers['user-agent'])
-    const browser = os.family
-    const platform = os.os.family
-    const version = `${os.major}.${os.minor}.${os.patch}`
-
     const { accessToken, refreshToken } = await this.authService.login({
       id: req.user.id,
       ip: req.ip,
-      device: { browser, platform, version },
+      device: getDeviceInfo(req),
     })
 
     res.cookie('accessToken', accessToken, {
@@ -114,16 +104,10 @@ export class AuthController {
   async refresh(@Req() req: Request, @Res() res: Response): Promise<void> {
     try {
       const { refreshToken } = req.cookies
-
-      const os = useragent.parse(req.headers['user-agent'])
-      const browser = os.family
-      const platform = os.os.family
-      const version = `${os.major}.${os.minor}.${os.patch}`
-
       const { accessToken } = await this.authService.refresh({
         refreshToken,
         ip: req.ip,
-        device: { browser, platform, version },
+        device: getDeviceInfo(req),
       })
       res.cookie('accessToken', accessToken, {
         httpOnly: true,

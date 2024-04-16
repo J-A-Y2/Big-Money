@@ -100,9 +100,9 @@ async function bootstrap() {
 
   app.useGlobalFilters(new HttpExceptionFilter())
   app.enableCors({ origin: true, credentials: true })
-  app.useStaticAssets(path.join(__dirname, '..', 'uploads'), {
-    prefix: '/uploads',
-  })
+  // app.useStaticAssets(path.join(__dirname, '..', 'uploads'), {
+  //   prefix: '/uploads',
+  // })
   app.use(cookieParser())
   app.useGlobalPipes(
     new ValidationPipe({

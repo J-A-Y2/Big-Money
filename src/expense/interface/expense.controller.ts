@@ -35,7 +35,7 @@ import {
 } from '@nestjs/swagger'
 import { CurrentUser } from '@common/decorators/user.decorator'
 
-@ApiTags('BUDGET')
+@ApiTags('EXPENSE')
 @UseGuards(JwtAuthGuard)
 @Controller('expenses')
 export class ExpenseController {

@@ -6,9 +6,12 @@ import { jwtConfig } from '@common/configs/jwt.config'
 import { UserProvider } from './user.provider'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { User } from '@user/domain/entity/user.entity'
+import { EmailModule } from '@email/email.module'
+import { AuthProvider } from '@auth/interface/auth.provider'
 
 @Module({
   imports: [
+    EmailModule,
     TypeOrmModule.forFeature([User]),
     JwtModule.registerAsync({
       useFactory: async (configService: ConfigService) => ({
@@ -21,7 +24,7 @@ import { User } from '@user/domain/entity/user.entity'
     }),
   ],
   controllers: [UserController],
-  providers: [...UserProvider],
+  providers: [...AuthProvider, ...UserProvider],
   exports: [...UserProvider],
 })
 export class UserModule {}
