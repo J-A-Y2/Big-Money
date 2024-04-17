@@ -20,7 +20,6 @@ export class BudgetRepository implements IBudgetRepository {
     classification: number,
     amount: number,
   ): Promise<Budget> {
-    // console.log('Received userId:', userId) // 로그 추가
     const result = await this.budgetRepository.save({
       user: { id: userId }, // user_id를 user 객체로 변경
       month,

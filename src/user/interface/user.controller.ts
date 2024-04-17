@@ -85,8 +85,6 @@ export class UserController {
   ): Promise<void> {
     const { signupVerifyToken } = dto
 
-    console.log('signupVerifyToken', signupVerifyToken)
-
     await this.userService.verifyEmail(signupVerifyToken, req)
   }
 }

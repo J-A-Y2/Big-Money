@@ -10,10 +10,7 @@ import {
   ReqRecommendBudgetDto,
 } from '@budget/domain/dto/budget.app.dto'
 import { IBudgetService } from '@budget/domain/interface/budget.service.interface'
-import {
-  IBUDGET_REPOSITORY,
-  IHANDLE_DATE_TIME,
-} from '@common/constants/provider.constant'
+import { IBUDGET_REPOSITORY } from '@common/constants/provider.constant'
 import { IBudgetRepository } from '@budget/domain/interface/budget.repository.interface'
 import {
   calculateBudget,
@@ -34,7 +31,6 @@ export class BudgetService implements IBudgetService {
   async createBudget(req: ReqBudgetDto): Promise<string> {
     try {
       const yearMonth = new Date(req.month) // month는 문자열
-
       const existingBudget = await this.budgetRepository.findSameBudget(
         yearMonth,
         req.userId,
@@ -97,26 +93,22 @@ export class BudgetService implements IBudgetService {
   }
 
   async recommendBudget(req: ReqRecommendBudgetDto): Promise<object> {
-    try {
-      const yearMonth = new Date(req.month)
-      const findBudgetRatio = await this.budgetRepository.getMonthlyBudgetRatio(
-        yearMonth,
-        req.userId,
-      )
+    const yearMonth = new Date(req.month)
+    const findBudgetRatio = await this.budgetRepository.getMonthlyBudgetRatio(
+      yearMonth,
+      req.userId,
+    )
 
-      const totalBudget = Number(req.total)
+    const totalBudget = Number(req.total)
 
-      const recommendedBudget = calculateRecommendedBudget(
-        findBudgetRatio,
-        (ratio: number) => calculateBudget(totalBudget, ratio),
-      )
+    const recommendedBudget = calculateRecommendedBudget(
+      findBudgetRatio,
+      (ratio: number) => calculateBudget(totalBudget, ratio),
+    )
 
-      return {
-        message: '정상적으로 추천 예산이 생성되었습니다.',
-        recommendedBudget,
-      }
-    } catch (error) {
-      throw new InternalServerErrorException('추천예산 계산에 실패했습니다.')
+    return {
+      message: '정상적으로 추천 예산이 생성되었습니다.',
+      recommendedBudget,
     }
   }
 }
