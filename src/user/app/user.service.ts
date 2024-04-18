@@ -90,6 +90,7 @@ export class UserService implements IUserService {
       'info',
       `${REGISTER_SUCCESS_MESSAGE}- 가입 이메일:${createdUser.email}, 유저 ID:${createdUser.id}, 가입 일시:${createdUser.createdAt}`,
     )
+
     return createdUser
   }
 

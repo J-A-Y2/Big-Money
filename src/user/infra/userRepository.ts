@@ -13,7 +13,6 @@ export class UserRepository implements IUserRepository {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  // 유저 생성
   async createUser(
     email: string,
     password: string,
@@ -41,6 +40,10 @@ export class UserRepository implements IUserRepository {
   }
 
   async findById(id: string): Promise<User> {
+    if (!id) {
+      throw new Error('Invalid id: id cannot be undefined')
+    }
+
     const user = await this.userRepository.findOne({ where: { id } })
     return plainToClass(User, user)
   }
@@ -51,6 +54,25 @@ export class UserRepository implements IUserRepository {
       select: ['password'],
     })
     return user.password
+  }
+
+  async findByEmailOrSave(
+    email: string,
+    username: string,
+    providerId: string,
+  ): Promise<User> {
+    const user = await this.userRepository.findOneBy({ email })
+    if (user) {
+      return user
+    }
+
+    const newUser = await this.userRepository.save({
+      email,
+      username,
+      providerId,
+    })
+
+    return newUser
   }
 
   async updateUser(id: string, req: ReqUpdateUserAppDto): Promise<User> {

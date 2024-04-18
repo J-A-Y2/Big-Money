@@ -26,7 +26,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger'
 import { UndefinedToNullInterceptor } from '@common/interceptors/undefinedToNull.interceptor'
-import { VerifyEmailDto } from './dto/verify-email.dto'
 import { Request } from 'express'
 
 @UseInterceptors(UndefinedToNullInterceptor)
@@ -81,10 +80,8 @@ export class UserController {
   @Post('/email-verify')
   async verifyEmail(
     @Req() req: Request,
-    @Query() dto: VerifyEmailDto,
+    @Query('signupVerifyToken') signupVerifyToken: string,
   ): Promise<void> {
-    const { signupVerifyToken } = dto
-
     await this.userService.verifyEmail(signupVerifyToken, req)
   }
 }

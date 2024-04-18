@@ -24,6 +24,8 @@ import {
 import { CurrentUser } from '@common/decorators/user.decorator'
 import { ApiOperation, ApiOkResponse, ApiTags } from '@nestjs/swagger'
 import { getDeviceInfo } from '@common/utils/deviceInfo'
+import { GoogleAuthGuard } from '@auth/infra/passport/guards/google.guard'
+import { User } from '@user/domain/entity/user.entity'
 
 @ApiTags('AUTH')
 @Controller('auth')
@@ -138,5 +140,15 @@ export class AuthController {
     @Body() body: ReqCheckPasswordDto,
   ): Promise<void> {
     await this.authService.checkPassword({ id: user, password: body.password })
+  }
+
+  @Get('/google/callback')
+  @ApiOperation({
+    summary: '구글 로그인 콜백',
+    description: '구글 로그인 후 처리를 담당합니다.',
+  })
+  @UseGuards(GoogleAuthGuard)
+  async googleRedirect(@CurrentUser() user: User): Promise<User> {
+    return user
   }
 }

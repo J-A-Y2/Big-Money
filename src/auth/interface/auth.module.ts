@@ -5,6 +5,8 @@ import { ConfigService } from '@nestjs/config'
 import { jwtConfig } from '@common/configs/jwt.config'
 import { UserModule } from '@user/interface/user.module'
 import { AuthProvider } from './auth.provider'
+import { UserProvider } from '@user/interface/user.provider'
+import { GoogleStrategy } from '@auth/infra/passport/strategies/google.stratgy'
 
 @Module({
   controllers: [AuthController],

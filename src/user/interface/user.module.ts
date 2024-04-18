@@ -8,6 +8,7 @@ import { TypeOrmModule } from '@nestjs/typeorm'
 import { User } from '@user/domain/entity/user.entity'
 import { EmailModule } from '@email/email.module'
 import { AuthProvider } from '@auth/interface/auth.provider'
+import { AuthModule } from '@auth/interface/auth.module'
 
 @Module({
   imports: [
