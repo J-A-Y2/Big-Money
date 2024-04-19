@@ -14,11 +14,6 @@ import { ApiProperty } from '@nestjs/swagger'
 
 @Entity()
 export class User extends BaseEntity {
-  @ApiProperty({
-    example: 'test@test.com',
-    description: '이메일',
-    required: true,
-  })
   @PrimaryGeneratedColumn('uuid')
   @Expose()
   id: string
@@ -28,7 +23,7 @@ export class User extends BaseEntity {
     description: '이메일',
     required: true,
   })
-  @Column({ length: 15 })
+  @Column({ unique: true })
   @Expose()
   email: string
 
@@ -37,7 +32,7 @@ export class User extends BaseEntity {
     description: '비밀번호',
     required: true,
   })
-  @Column()
+  @Column({ nullable: true })
   @Exclude()
   password: string
 
@@ -55,7 +50,7 @@ export class User extends BaseEntity {
     description: '닉네임',
     required: true,
   })
-  @Column()
+  @Column({ unique: true, nullable: true })
   @Expose()
   nickname: string
 
@@ -64,7 +59,7 @@ export class User extends BaseEntity {
     description: '생년월일',
     required: true,
   })
-  @Column()
+  @Column({ nullable: true })
   @Expose()
   birthdate: Date
 
@@ -73,7 +68,7 @@ export class User extends BaseEntity {
     description: '나이',
     required: true,
   })
-  @Column()
+  @Column({ nullable: true })
   @Expose()
   age: number
 
@@ -82,7 +77,7 @@ export class User extends BaseEntity {
     description: '성별',
     required: true,
   })
-  @Column()
+  @Column({ nullable: true })
   @Expose()
   gender: string
 

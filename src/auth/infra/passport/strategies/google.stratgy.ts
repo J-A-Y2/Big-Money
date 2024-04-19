@@ -19,14 +19,16 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   }
 
   async validate(accessToken: string, refreshToken: string, profile: Profile) {
-    const { id, name, emails } = profile
+    console.log('accessToken', accessToken)
+    const { id, displayName, emails } = profile
+    console.log('profile', profile)
 
     const providerId = id
     const email = emails[0].value
 
     const user: User = await this.UserRepository.findByEmailOrSave(
       email,
-      name.familyName + name.givenName,
+      displayName,
       providerId,
     )
     return user

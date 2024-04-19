@@ -20,7 +20,7 @@ export interface IUserRepository {
 
   findByEmailOrSave(
     email: string,
-    username: string,
+    name: string,
     providerId: string,
   ): Promise<User>
 

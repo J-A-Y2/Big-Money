@@ -142,7 +142,15 @@ export class AuthController {
     await this.authService.checkPassword({ id: user, password: body.password })
   }
 
-  @Get('/google/callback')
+  @Get('/google/login')
+  @UseGuards(GoogleAuthGuard)
+  async googleLogin() {
+    return {
+      msg: 'Google Authentication',
+    }
+  }
+
+  @Get('/google/redirect')
   @ApiOperation({
     summary: '구글 로그인 콜백',
     description: '구글 로그인 후 처리를 담당합니다.',

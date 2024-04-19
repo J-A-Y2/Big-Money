@@ -58,7 +58,7 @@ export class UserRepository implements IUserRepository {
 
   async findByEmailOrSave(
     email: string,
-    username: string,
+    name: string,
     providerId: string,
   ): Promise<User> {
     const user = await this.userRepository.findOneBy({ email })
@@ -68,7 +68,7 @@ export class UserRepository implements IUserRepository {
 
     const newUser = await this.userRepository.save({
       email,
-      username,
+      name,
       providerId,
     })
 
