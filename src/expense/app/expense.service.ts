@@ -54,7 +54,7 @@ export class ExpenseService implements IExpenseService {
       const monthDateZoned =
         this.handleDateTime.convertZonedDateTimeToDate(monthDate)
 
-      const budget = await this.budgetRepository.findBudgetByDate(
+      const budget = await this.budgetRepository.findBudgetByClassification(
         userId,
         classificationId,
         monthDateZoned,

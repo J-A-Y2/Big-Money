@@ -1,5 +1,4 @@
 import { Budget } from '../budget.entity'
-import { UUID } from 'crypto'
 import { ResGetMonthlyBudgetDto } from '../dto/budget.app.dto'
 
 export interface IBudgetRepository {
@@ -9,8 +8,8 @@ export interface IBudgetRepository {
     classification: number,
     amount: number,
   ): Promise<Budget>
-  findSameBudget(month: Date, userId: string): Promise<object>
-  findBudgetByDate(
+  // findBudget(month: Date, userId: string): Promise<object>
+  findBudgetByClassification(
     userId: string,
     classificationId: number,
     month: Date,

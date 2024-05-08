@@ -53,7 +53,7 @@ export class UserService implements IUserService {
     const user = await this.userRepository.findById(signupVerifyToken)
 
     if (!user) {
-      throw new NotFoundException('유저가 존재하지 않습니다')
+      throw new NotFoundException(USER_NOT_FOUND)
     }
 
     return this.authService.login({
@@ -109,7 +109,7 @@ export class UserService implements IUserService {
     const existingUser = await this.userRepository.findById(userId)
 
     if (!existingUser) {
-      throw new ConflictException(USER_NOT_FOUND)
+      throw new NotFoundException(USER_NOT_FOUND)
     }
 
     const deletedUser = await this.userRepository.deleteUser(userId)

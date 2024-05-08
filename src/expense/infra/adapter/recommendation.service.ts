@@ -173,6 +173,7 @@ export class RecommendationService implements IRecommendationService {
     }
   }
 
+  //오후 9시 스케쥴링
   @Cron('0 21 * * *', { name: 'recommendExpenditureTask' })
   async todayUsage(req: ReqMonthlyDto): Promise<object> {
     try {

@@ -4,7 +4,6 @@ import { IBudgetRepository } from '@budget/domain/interface/budget.repository.in
 import { plainToClass } from 'class-transformer'
 import { Repository, DeepPartial } from 'typeorm'
 import { InjectRepository } from '@nestjs/typeorm'
-import { UUID } from 'crypto'
 import { ResGetMonthlyBudgetDto } from '@budget/domain/dto/budget.app.dto'
 
 @Injectable()
@@ -15,7 +14,7 @@ export class BudgetRepository implements IBudgetRepository {
   ) {}
 
   async createBudget(
-    userId: UUID,
+    userId: string,
     month: Date,
     classification: number,
     amount: number,
@@ -29,18 +28,18 @@ export class BudgetRepository implements IBudgetRepository {
     return plainToClass(Budget, result)
   }
 
-  async findSameBudget(yearMonth: Date, userId: UUID): Promise<object> {
-    const existingBudget = await this.budgetRepository.find({
-      where: {
-        month: yearMonth,
-        user: { id: userId },
-      },
-    })
-    return existingBudget
-  }
+  // async findBudgetByDate(yearMonth: Date, userId: string): Promise<object> {
+  //   const monthlyBudget = await this.budgetRepository.find({
+  //     where: {
+  //       month: yearMonth,
+  //       user: { id: userId },
+  //     },
+  //   })
+  //   return monthlyBudget
+  // }
 
-  async findBudgetByDate(
-    userId: UUID,
+  async findBudgetByClassification(
+    userId: string,
     classificationId: number,
     month: Date,
   ): Promise<object> {
@@ -55,7 +54,7 @@ export class BudgetRepository implements IBudgetRepository {
   }
 
   async findMonthlyBudget(
-    userId: UUID,
+    userId: string,
     month: Date,
   ): Promise<ResGetMonthlyBudgetDto[]> {
     const budget = await this.budgetRepository.find({
@@ -66,7 +65,7 @@ export class BudgetRepository implements IBudgetRepository {
   }
 
   async updateBudget(
-    userId: UUID,
+    userId: string,
     month: Date,
     classification: number,
     amount: number,
@@ -88,7 +87,7 @@ export class BudgetRepository implements IBudgetRepository {
       throw new Error(`Failed : ${error.message}`)
     }
   }
-  async getMonthlyBudgetRatio(month: Date, userId: UUID): Promise<object> {
+  async getMonthlyBudgetRatio(month: Date, userId: string): Promise<object> {
     try {
       const query = this.budgetRepository
         .createQueryBuilder('budget')

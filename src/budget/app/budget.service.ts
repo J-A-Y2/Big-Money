@@ -1,13 +1,14 @@
 import {
   Injectable,
   Inject,
-  NotFoundException,
-  InternalServerErrorException,
   ConflictException,
+  NotFoundException,
 } from '@nestjs/common'
 import {
   ReqBudgetDto,
+  ReqGetMonthlyBudgetDto,
   ReqRecommendBudgetDto,
+  ResGetMonthlyBudgetDto,
 } from '@budget/domain/dto/budget.app.dto'
 import { IBudgetService } from '@budget/domain/interface/budget.service.interface'
 import { IBUDGET_REPOSITORY } from '@common/constants/provider.constant'
@@ -29,9 +30,9 @@ export class BudgetService implements IBudgetService {
   ) {}
 
   async createBudget(req: ReqBudgetDto): Promise<string> {
-    const existingBudget = await this.budgetRepository.findSameBudget(
-      new Date(req.month),
+    const existingBudget = await this.budgetRepository.findMonthlyBudget(
       req.userId,
+      new Date(req.month),
     )
     if (Object.keys(existingBudget).length > 0) {
       throw new ConflictException(BUDGET_ALREADY_EXIST)
@@ -64,6 +65,19 @@ export class BudgetService implements IBudgetService {
       message: '정상적으로 추천 예산이 생성되었습니다.',
       recommendedBudget,
     }
+  }
+
+  async monthlyBudget(
+    req: ReqGetMonthlyBudgetDto,
+  ): Promise<ResGetMonthlyBudgetDto[]> {
+    const findMonthlyBudget = await this.budgetRepository.findMonthlyBudget(
+      req.userId,
+      new Date(req.month),
+    )
+    if (Object.keys(findMonthlyBudget).length == 0) {
+      throw new NotFoundException(BUDGET_NOTFOUND)
+    }
+    return findMonthlyBudget
   }
 
   private async processBudget(

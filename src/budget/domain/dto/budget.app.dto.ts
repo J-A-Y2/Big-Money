@@ -1,4 +1,3 @@
-import { UUID } from 'crypto'
 import { IsNotEmpty, IsInt, IsObject, IsNumber } from 'class-validator'
 import {
   IsClassificationId,
@@ -31,6 +30,14 @@ export class ReqRecommendBudgetDto {
   @Transform(({ value }) => parseInt(value))
   readonly total: number
 }
+
+export class ReqGetMonthlyBudgetDto {
+  readonly userId: string
+
+  @IsNotEmpty({ message: '월 예산은 필수적으로 입력해야 합니다.' })
+  readonly month: string
+}
+
 export class ResGetMonthlyBudgetDto {
   id: number
   amount: number
