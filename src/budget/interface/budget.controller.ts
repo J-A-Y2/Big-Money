@@ -12,6 +12,7 @@ import {
   UsePipes,
   ValidationPipe,
   Query,
+  Patch,
 } from '@nestjs/common'
 import { IBudgetService } from '@budget/domain/interface/budget.service.interface'
 import { IBUDGET_SERVICE } from '@common/constants/provider.constant'
@@ -63,7 +64,7 @@ export class BudgetController {
     description: '예산 내용을 변경합니다.',
   })
   @ApiOkResponse({ description: 'ok' })
-  @Put()
+  @Patch()
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.NO_CONTENT)
   async updateBudget(
@@ -115,6 +116,4 @@ export class BudgetController {
     })
     return monthlyBudget
   }
-
-  //예산 삭제 api
 }

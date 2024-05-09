@@ -86,6 +86,12 @@ export class ExpenseService implements IExpenseService {
     }
   }
 
+  async updateExpense(
+    id: number,
+    userId: string,
+    expense: ReqExpenseDto,
+  ): Promise<void> {}
+
   async getMonthlyExpense(req: ReqMonthlyDto): Promise<object> {
     try {
       const yearMonthZoned = this.handleDateTime.getYearMonth(req.month)

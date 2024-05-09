@@ -16,5 +16,9 @@ export interface IExpenseService {
   getTotalExpenseByClassification(
     req: ReqMonthlyDto,
   ): Promise<ResClassificationExpenseDto[]>
-  // updateExpense(req: ReqExpenseDto): Promise<string>
+  updateExpense(
+    id: number,
+    userId: string,
+    expense: ReqExpenseDto,
+  ): Promise<void>
 }

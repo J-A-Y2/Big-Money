@@ -12,6 +12,7 @@ import {
   Query,
   Param,
   ParseIntPipe,
+  Patch,
 } from '@nestjs/common'
 import { IExpenseService } from '@expense/domain/interface/expense.service.interface'
 import {
@@ -64,6 +65,21 @@ export class ExpenseController {
     return expenses
   }
 
+  @ApiOperation({
+    summary: '지출 수정',
+  })
+  @ApiCreatedResponse({ description: 'success' })
+  @Patch(':id')
+  @UsePipes(ValidationPipe)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async updateExpense(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: string,
+    @Body() expense: ReqExpenseDto,
+  ): Promise<void> {
+    return await this.expenseService.updateExpense(id, user, expense)
+  }
+
   @ApiOperation({ summary: '오늘 지출 추천 API' })
   @ApiOkResponse({ description: 'ok' })
   @UsePipes(ValidationPipe)
@@ -98,6 +114,8 @@ export class ExpenseController {
 
   @ApiOperation({
     summary: '지출 내역을 한달 단위로 불러옵니다.',
+    description:
+      '한달 총 지출 금액과 함께 각 주마다의 총 지출 금액을 보여줍니다.',
   })
   @ApiOkResponse({ description: 'ok' })
   @Get()
@@ -133,7 +151,7 @@ export class ExpenseController {
   }
 
   @ApiOperation({
-    summary: '지출 내역을 카테로리별로 묶어서 불러옵니다.',
+    summary: '카테로리별 지출 금액을 묶어서 불러옵니다.',
   })
   @ApiOkResponse({ description: 'ok' })
   @Get('classification')
@@ -153,7 +171,7 @@ export class ExpenseController {
 
   @ApiOperation({
     summary: '지출 내용 불러오기',
-    description: '지출 내역을 불러옵니다.',
+    description: '해당 지출 내역을 불러옵니다.',
   })
   @ApiOkResponse({ description: 'ok' })
   @Get(':id')
@@ -166,10 +184,6 @@ export class ExpenseController {
     const getExpense = await this.expenseService.getExpense(expenseId, user)
     return getExpense
   }
-
-  //지출 수정 api 추가하기
-
-  //지출 삭제 api 추가하기
 
   // @Put()
   // @UsePipes(ValidationPipe)

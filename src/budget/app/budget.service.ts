@@ -42,9 +42,9 @@ export class BudgetService implements IBudgetService {
     return '예산 설정에 성공하였습니다.'
   }
 
-  async updateBudget(req: ReqBudgetDto): Promise<string> {
+  async updateBudget(req: ReqBudgetDto): Promise<void> {
+    await this.monthlyBudget(req)
     await this.processBudget(req, 'updateBudget')
-    return '예산 변경에 성공하였습니다.'
   }
 
   async recommendBudget(req: ReqRecommendBudgetDto): Promise<object> {
