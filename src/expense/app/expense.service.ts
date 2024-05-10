@@ -23,6 +23,7 @@ import { IExpenseRepository } from '@expense/domain/interface/expense.repository
 import { IBudgetRepository } from '@budget/domain/interface/budget.repository.interface'
 import { UUID } from 'crypto'
 import { IHandleDateTime } from '@common/interfaces/IHandleDateTime'
+import { BUDGET_NOTFOUND } from '@common/messages/budget/budget.error'
 
 @Injectable()
 export class ExpenseService implements IExpenseService {
@@ -36,61 +37,74 @@ export class ExpenseService implements IExpenseService {
   ) {}
 
   async createExpense(req: ReqExpenseDto): Promise<string> {
-    try {
-      const {
-        classificationId,
-        userId,
-        amount,
-        memo,
-        exception,
-        date: reqDate,
-      } = req
+    const date = new Date(req.date)
+    const year = this.handleDateTime.getYear(date)
+    const month = this.handleDateTime.getMonth(date)
 
-      const date = new Date(reqDate)
-      const year = this.handleDateTime.getYear(date)
-      const month = this.handleDateTime.getMonth(date)
+    const monthDate = new Date(`${year}-${month}-01`)
 
-      const monthDate = this.handleDateTime.getMonthDate(year, month)
-      const monthDateZoned =
-        this.handleDateTime.convertZonedDateTimeToDate(monthDate)
+    const budget = await this.budgetRepository.findBudgetByClassification(
+      req.userId,
+      req.classificationId,
+      monthDate,
+    )
 
-      const budget = await this.budgetRepository.findBudgetByClassification(
-        userId,
-        classificationId,
-        monthDateZoned,
-      )
+    const budgetId = budget[0].id
 
-      if (!budget || Object.keys(budget).length === 0) {
-        console.log('예산을 찾을 수 없습니다.')
-        return
-      }
-
-      const budgetId = budget[0].id
-
-      await this.expenseRepository.createExpense(
-        userId,
-        classificationId,
-        budgetId,
-        date,
-        amount,
-        memo,
-        exception,
-      )
-      return '지출 설정에 성공하였습니다.'
-    } catch (error) {
-      if (error instanceof ConflictException) {
-        throw error
-      } else {
-        throw new InternalServerErrorException('지출 설정에 실패했습니다.')
-      }
+    if (!budget || Object.keys(budget).length == 0) {
+      throw new NotFoundException(BUDGET_NOTFOUND)
     }
+
+    await this.expenseRepository.createExpense(
+      req.userId,
+      req.classificationId,
+      budgetId,
+      date,
+      req.amount,
+      req.memo,
+      req.exception,
+    )
+    return '지출 설정에 성공하였습니다.'
   }
 
   async updateExpense(
     id: number,
     userId: string,
-    expense: ReqExpenseDto,
-  ): Promise<void> {}
+    req: ReqExpenseDto,
+  ): Promise<void> {
+    const expense = await this.expenseRepository.getExpense(userId, id)
+
+    if (!expense) {
+      throw new NotFoundException('지출 항목을 찾을 수 없습니다.')
+    }
+
+    const date = new Date(expense.date)
+    const year = this.handleDateTime.getYear(date)
+    const month = this.handleDateTime.getMonth(date)
+
+    const monthDate = new Date(`${year}-${month}-01`)
+
+    const budget = await this.budgetRepository.findBudgetByClassification(
+      userId,
+      req.classificationId,
+      monthDate,
+    )
+
+    const budgetId = budget[0].id
+
+    if (!budget || Object.keys(budget).length == 0) {
+      throw new NotFoundException(BUDGET_NOTFOUND)
+    }
+    const updatedExpenseData = {
+      ...req,
+      budgetId: budgetId,
+    }
+
+    await this.expenseRepository.updateExpense({
+      ...expense,
+      ...updatedExpenseData,
+    })
+  }
 
   async getMonthlyExpense(req: ReqMonthlyDto): Promise<object> {
     try {

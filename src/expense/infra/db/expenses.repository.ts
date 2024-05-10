@@ -10,6 +10,7 @@ import {
   ResClassificationExpenseDto,
   ResDetailExpenseDto,
   ResGetExpenseDto,
+  UpdateExpenseDto,
 } from '@expense/domain/dto/expense.app.dto'
 
 @Injectable()
@@ -49,6 +50,14 @@ export class ExpenseRepository implements IExpenseRepository {
       console.error('Expense 생성 중 오류가 발생했습니다:', error)
       throw error
     }
+  }
+
+  async updateExpense(updatedData: UpdateExpenseDto): Promise<void> {
+    await this.expenseRepository.save({
+      classification: { id: updatedData.classificationId },
+      budget: { id: updatedData.budgetId },
+      ...updatedData,
+    })
   }
 
   async getTotalMonthlyExpense(userId: UUID, date: Date): Promise<object> {

@@ -77,7 +77,7 @@ export class ExpenseController {
     @CurrentUser() user: string,
     @Body() expense: ReqExpenseDto,
   ): Promise<void> {
-    return await this.expenseService.updateExpense(id, user, expense)
+    await this.expenseService.updateExpense(id, user, expense)
   }
 
   @ApiOperation({ summary: '오늘 지출 추천 API' })
@@ -184,19 +184,4 @@ export class ExpenseController {
     const getExpense = await this.expenseService.getExpense(expenseId, user)
     return getExpense
   }
-
-  // @Put()
-  // @UsePipes(ValidationPipe)
-  // @HttpCode(HttpStatus.OK)
-  // async updateExpense(
-  //   @Req() req: Request,
-  //   @Body() expense: ReqExpenseDto,
-  // ): Promise<string> {
-  //   const userId = req.user.id
-  //   const expenses = await this.expenseService.updateExpense({
-  //     userId,
-  //     ...expense,
-  //   })
-  //   return expenses
-  // }
 }

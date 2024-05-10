@@ -2,10 +2,9 @@ import {
   ReqExpenseDto,
   ResClassificationExpenseDto,
   ResDetailExpenseDto,
+  UpdateExpenseDto,
 } from '../dto/expense.app.dto'
 import { Expense } from '../../infra/db/expense.entity'
-import { UUID } from 'crypto'
-import { OAuthFlowObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface'
 
 export interface IExpenseRepository {
   createExpense(
@@ -17,6 +16,7 @@ export interface IExpenseRepository {
     memo: string,
     exception: boolean,
   ): Promise<object>
+  updateExpense(updatedData: UpdateExpenseDto): Promise<void>
   getTotalMonthlyExpense(userId: string, date: Date): Promise<object>
   getWeeklyExpense(userId: string, date: Date): Promise<object>
   getAllExpense(userId: string, date: Date): Promise<Expense[]>
