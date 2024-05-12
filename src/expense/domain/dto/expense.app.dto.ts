@@ -4,8 +4,6 @@ import {
   IsDateString,
   IsString,
   IsBoolean,
-  IsIn,
-  IsOptional,
 } from 'class-validator'
 
 export class ReqExpenseDto {
@@ -30,11 +28,15 @@ export class ReqExpenseDto {
 }
 export class UpdateExpenseDto extends ReqExpenseDto {
   @IsNumber()
+  id: number
+
+  @IsNumber()
   budgetId: number
 }
 
 export class ReqMonthlyDto {
   readonly userId: string
+
   @IsNotEmpty({ message: '지출 월은 필수적으로 입력해야 합니다.' })
   readonly month: string
 }

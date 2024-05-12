@@ -37,10 +37,7 @@ export class ExpenseService implements IExpenseService {
   ) {}
 
   async createExpense(req: ReqExpenseDto): Promise<string> {
-    const date = new Date(req.date)
-    const year = this.handleDateTime.getYear(date)
-    const month = this.handleDateTime.getMonth(date)
-
+    const { year, month } = this.getYearAndMonthFromDate(new Date(req.date))
     const monthDate = new Date(`${year}-${month}-01`)
 
     const budget = await this.budgetRepository.findBudgetByClassification(
@@ -55,15 +52,7 @@ export class ExpenseService implements IExpenseService {
       throw new NotFoundException(BUDGET_NOTFOUND)
     }
 
-    await this.expenseRepository.createExpense(
-      req.userId,
-      req.classificationId,
-      budgetId,
-      date,
-      req.amount,
-      req.memo,
-      req.exception,
-    )
+    await this.expenseRepository.createExpense(req, budgetId)
     return '지출 설정에 성공하였습니다.'
   }
 
@@ -74,14 +63,11 @@ export class ExpenseService implements IExpenseService {
   ): Promise<void> {
     const expense = await this.expenseRepository.getExpense(userId, id)
 
-    if (!expense) {
+    if (!expense || Object.keys(expense).length === 0) {
       throw new NotFoundException('지출 항목을 찾을 수 없습니다.')
     }
 
-    const date = new Date(expense.date)
-    const year = this.handleDateTime.getYear(date)
-    const month = this.handleDateTime.getMonth(date)
-
+    const { year, month } = this.getYearAndMonthFromDate(new Date(req.date))
     const monthDate = new Date(`${year}-${month}-01`)
 
     const budget = await this.budgetRepository.findBudgetByClassification(
@@ -92,7 +78,7 @@ export class ExpenseService implements IExpenseService {
 
     const budgetId = budget[0].id
 
-    if (!budget || Object.keys(budget).length == 0) {
+    if (!budget || Object.keys(budget).length === 0) {
       throw new NotFoundException(BUDGET_NOTFOUND)
     }
     const updatedExpenseData = {
@@ -107,101 +93,81 @@ export class ExpenseService implements IExpenseService {
   }
 
   async getMonthlyExpense(req: ReqMonthlyDto): Promise<object> {
-    try {
-      const yearMonthZoned = this.handleDateTime.getYearMonth(req.month)
-      const yearMonth =
-        this.handleDateTime.convertZonedDateTimeToDate(yearMonthZoned)
+    const yearMonth = new Date(req.month)
+    // JavaScript에서 월은 0부터 시작하므로 1을 더합니다.
+    const month = yearMonth.getMonth() + 1
 
-      const month = yearMonth.getMonth() + 1 // JavaScript에서 월은 0부터 시작하므로 1을 더해주어야 합니다.
+    const totalMonthlyExpenseResult =
+      await this.expenseRepository.getTotalMonthlyExpense(req.userId, yearMonth)
 
-      const totalMonthlyExpenseResult =
-        await this.expenseRepository.getTotalMonthlyExpense(
-          req.userId,
-          yearMonth,
-        )
+    const totalWeeklyExpenseResult =
+      await this.expenseRepository.getWeeklyExpense(req.userId, yearMonth)
 
-      const totalWeeklyExpenseResult =
-        await this.expenseRepository.getWeeklyExpense(req.userId, yearMonth)
+    let result = {}
+    // 월간 총 지출을 객체에 추가합니다.
+    result[`${month}월 총 지출`] = Number(totalMonthlyExpenseResult['total'])
 
-      let result = {}
-      // 월간 총 지출을 객체에 추가합니다.
-      result[`${month}월 총 지출`] = Number(totalMonthlyExpenseResult['total'])
+    //주간 지출을 객체에 추가합니다.
+    Object.entries(totalWeeklyExpenseResult).forEach(([key, item], index) => {
+      console.log(`item for week ${index + 1}:`, item)
+      result[`${month}월 ${index + 1}주`] = Number(item['totalExpense'])
+    })
 
-      //주간 지출을 객체에 추가합니다.
-      Object.entries(totalWeeklyExpenseResult).forEach(([key, item], index) => {
-        console.log(`item for week ${index + 1}:`, item)
-        result[`${month}월 ${index + 1}주`] = Number(item['totalExpense'])
-      })
-
-      return result
-    } catch (error) {
-      throw new InternalServerErrorException(
-        '한달 지출 금액 불러오기에 실패했습니다.',
-      )
-    }
+    return result
   }
 
   async getAllExpense(req: ReqMonthlyDto): Promise<ResGetExpenseDto[]> {
-    try {
-      const yearMonth = new Date(req.month)
-      const expenses = await this.expenseRepository.getAllExpense(
-        req.userId,
-        yearMonth,
-      )
-      console.log('expenses', expenses)
-      const result = expenses.map((expense) => ({
-        id: expense.id,
-        date: expense.date,
-        amount: expense.amount,
-        classification: expense.classification.classification,
-      }))
+    const yearMonth = new Date(req.month)
+    const expenses = await this.expenseRepository.getAllExpense(
+      req.userId,
+      yearMonth,
+    )
 
-      return result
-    } catch (error) {
-      throw new InternalServerErrorException(
-        '한달 모든 지출 불러오기에 실패했습니다.',
-      )
-    }
+    const result = expenses.map((expense) => ({
+      id: expense.id,
+      date: expense.date,
+      amount: expense.amount,
+      classification: expense.classification.classification,
+    }))
+
+    return result
   }
 
-  async getExpense(id: number, userId: UUID): Promise<ResDetailExpenseDto> {
-    try {
-      const result = await this.expenseRepository.getExpense(userId, id)
-      return result
-    } catch (error) {
-      throw new InternalServerErrorException(
-        '상세지출 내역 가져오기에 실패했습니다.',
-      )
-    }
+  async getExpense(
+    expenseId: number,
+    userId: UUID,
+  ): Promise<ResDetailExpenseDto> {
+    const result = await this.expenseRepository.getExpense(userId, expenseId)
+    return result
   }
 
   async getTotalExpenseByClassification(
     req: ReqMonthlyDto,
   ): Promise<ResClassificationExpenseDto[]> {
-    try {
-      const month = new Date(req.month)
-      const expenses =
-        await this.expenseRepository.getTotalExpenseByClassification(
-          req.userId,
-          month,
-        )
-
-      //키를 가지는 객체로 초기화 후 result에 매핑하여 즉시 expense에 할당
-      let result: { [key: number]: ResClassificationExpenseDto } = {}
-      for (let i = 1; i <= 18; i++) {
-        result[i] = { classificationId: i, total: '0' }
-      }
-
-      for (let expense of expenses) {
-        result[expense.classificationId] = expense
-      }
-
-      // result객체를 배열로 변환
-      return Object.values(result)
-    } catch (error) {
-      throw new InternalServerErrorException(
-        '카테고리지출 내역 가져오기에 실패했습니다.',
+    const month = new Date(req.month)
+    const expenses =
+      await this.expenseRepository.getTotalExpenseByClassification(
+        req.userId,
+        month,
       )
+
+    //키를 가지는 객체로 초기화 후 result에 매핑하여 즉시 expense에 할당
+    let result: { [key: number]: ResClassificationExpenseDto } = {}
+    for (let i = 1; i <= 18; i++) {
+      result[i] = { classificationId: i, total: '0' }
     }
+
+    for (let expense of expenses) {
+      result[expense.classificationId] = expense
+    }
+
+    // result객체를 배열로 변환
+    return Object.values(result)
+  }
+
+  private getYearAndMonthFromDate(date: Date): { year: number; month: number } {
+    const year = this.handleDateTime.getYear(date)
+    const month = this.handleDateTime.getMonth(date)
+    return { year, month }
   }
 }

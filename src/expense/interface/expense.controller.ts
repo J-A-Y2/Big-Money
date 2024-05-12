@@ -87,11 +87,11 @@ export class ExpenseController {
   @Get('recommendExpenditure')
   async getRecommendExpenditure(
     @CurrentUser() user: string,
-    @Query() month: ReqMonthlyDto,
+    @Query('month') month: string,
   ) {
     const result = await this.recommendationService.recommendExpenditure({
       userId: user,
-      ...month,
+      month,
     })
     return result
   }
@@ -101,13 +101,10 @@ export class ExpenseController {
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.OK)
   @Get('todayUsage')
-  async getTodayUsage(
-    @CurrentUser() user: string,
-    @Query() month: ReqMonthlyDto,
-  ) {
+  async getTodayUsage(@CurrentUser() user: string, @Query() month: string) {
     const result = await this.recommendationService.todayUsage({
       userId: user,
-      ...month,
+      month,
     })
     return result
   }
@@ -123,11 +120,11 @@ export class ExpenseController {
   @HttpCode(HttpStatus.OK)
   async getMonthlyExpense(
     @CurrentUser() user: string,
-    @Query() month: ReqMonthlyDto,
+    @Query('month') month: string,
   ): Promise<object> {
     const monthlyExpenses = await this.expenseService.getMonthlyExpense({
       userId: user,
-      ...month,
+      month,
     })
     return monthlyExpenses
   }
@@ -141,11 +138,11 @@ export class ExpenseController {
   @HttpCode(HttpStatus.OK)
   async getAllExpense(
     @CurrentUser() user: string,
-    @Query() month: ReqMonthlyDto,
+    @Query('month') month: string,
   ): Promise<ResGetExpenseDto[]> {
     const getAllExpense = await this.expenseService.getAllExpense({
       userId: user,
-      ...month,
+      month,
     })
     return getAllExpense
   }
@@ -159,12 +156,12 @@ export class ExpenseController {
   @HttpCode(HttpStatus.OK)
   async getTotalExpenseByClassification(
     @CurrentUser() user: string,
-    @Query() month: ReqMonthlyDto,
+    @Query('month') month: string,
   ): Promise<ResClassificationExpenseDto[]> {
     const getTotalExpenseByClassification =
       await this.expenseService.getTotalExpenseByClassification({
         userId: user,
-        ...month,
+        month,
       })
     return getTotalExpenseByClassification
   }
