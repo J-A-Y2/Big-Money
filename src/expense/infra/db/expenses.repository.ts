@@ -1,15 +1,13 @@
 import { Injectable } from '@nestjs/common'
 import { Expense } from '@expense/infra/db/expense.entity'
 import { IExpenseRepository } from '@expense/domain/interface/expense.repository.interface'
-import { plainToClass, plainToInstance } from 'class-transformer'
+import { plainToInstance } from 'class-transformer'
 import { Repository, DeepPartial, QueryFailedError } from 'typeorm'
 import { InjectRepository } from '@nestjs/typeorm'
-import { UUID } from 'crypto'
 import {
   ReqExpenseDto,
   ResClassificationExpenseDto,
   ResDetailExpenseDto,
-  ResGetExpenseDto,
   UpdateExpenseDto,
 } from '@expense/domain/dto/expense.app.dto'
 
@@ -41,7 +39,7 @@ export class ExpenseRepository implements IExpenseRepository {
     })
   }
 
-  async getTotalMonthlyExpense(userId: UUID, date: Date): Promise<object> {
+  async getTotalMonthlyExpense(userId: string, date: Date): Promise<object> {
     const startDate = date // 입력된 날짜의 월의 시작일 (예: 2023-11-01)
     const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0) // 입력된 날짜의 월의 마지막일 (예: 2023-11-30)
 
@@ -55,7 +53,7 @@ export class ExpenseRepository implements IExpenseRepository {
 
     return totalExpense // { total: "<월간 총 지출액>" }
   }
-  async getWeeklyExpense(userId: UUID, date: Date): Promise<object[]> {
+  async getWeeklyExpense(userId: string, date: Date): Promise<object[]> {
     const startDate = date
     const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0)
 
@@ -99,9 +97,9 @@ export class ExpenseRepository implements IExpenseRepository {
     return weeklyExpenses
   }
 
-  async getAllExpense(userId: UUID, date: Date): Promise<Expense[]> {
+  async getAllExpense(userId: string, date: Date): Promise<Expense[]> {
     try {
-      const formattedDate = date.toISOString().slice(0, 7) // YYYY-MM format
+      const formattedDate = date.toISOString().slice(0, 7) // YYYY-MM format ISO 형식(YYYY-MM-DDTHH:mm:ss.sssZ)
       const getAllExpense = await this.expenseRepository
         .createQueryBuilder('expense')
         .leftJoinAndSelect('expense.classification', 'classification')
@@ -120,7 +118,7 @@ export class ExpenseRepository implements IExpenseRepository {
   }
 
   async getExpense(
-    userId: UUID,
+    userId: string,
     expenseId: number,
   ): Promise<ResDetailExpenseDto> {
     const result = await this.expenseRepository.findOne({
@@ -131,7 +129,7 @@ export class ExpenseRepository implements IExpenseRepository {
   }
 
   async getTotalExpenseByClassification(
-    userId: UUID,
+    userId: string,
     month: Date,
   ): Promise<ResClassificationExpenseDto[]> {
     try {
