@@ -11,6 +11,8 @@ import {
   Delete,
   Patch,
   UseInterceptors,
+  Query,
+  Req,
 } from '@nestjs/common'
 import { ReqRegisterDto, ReqUpdateDto } from './dto/registerUserDto'
 import { IUSER_SERVICE } from '@common/constants/provider.constant'
@@ -23,8 +25,8 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger'
-import { UUID } from 'crypto'
 import { UndefinedToNullInterceptor } from '@common/interceptors/undefinedToNull.interceptor'
+import { Request } from 'express'
 
 @UseInterceptors(UndefinedToNullInterceptor)
 @ApiTags('USER')
@@ -73,5 +75,13 @@ export class UserController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(@CurrentUser() user: string): Promise<void> {
     await this.userService.deleteUser(user)
+  }
+
+  @Post('/email-verify')
+  async verifyEmail(
+    @Req() req: Request,
+    @Query('signupVerifyToken') signupVerifyToken: string,
+  ): Promise<void> {
+    await this.userService.verifyEmail(signupVerifyToken, req)
   }
 }

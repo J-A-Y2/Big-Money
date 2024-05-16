@@ -1,19 +1,17 @@
 import {
   Injectable,
   Inject,
-  NotFoundException,
-  InternalServerErrorException,
   ConflictException,
+  NotFoundException,
 } from '@nestjs/common'
 import {
   ReqBudgetDto,
+  ReqGetMonthlyBudgetDto,
   ReqRecommendBudgetDto,
+  ResGetMonthlyBudgetDto,
 } from '@budget/domain/dto/budget.app.dto'
 import { IBudgetService } from '@budget/domain/interface/budget.service.interface'
-import {
-  IBUDGET_REPOSITORY,
-  IHANDLE_DATE_TIME,
-} from '@common/constants/provider.constant'
+import { IBUDGET_REPOSITORY } from '@common/constants/provider.constant'
 import { IBudgetRepository } from '@budget/domain/interface/budget.repository.interface'
 import {
   calculateBudget,
@@ -32,91 +30,70 @@ export class BudgetService implements IBudgetService {
   ) {}
 
   async createBudget(req: ReqBudgetDto): Promise<string> {
-    try {
-      const yearMonth = new Date(req.month) // month는 문자열
-
-      const existingBudget = await this.budgetRepository.findSameBudget(
-        yearMonth,
-        req.userId,
-      )
-      // 해당 달에 이미 예산이 있는지 확인
-      if (Object.keys(existingBudget).length > 0) {
-        throw new ConflictException(BUDGET_ALREADY_EXIST)
-      } else {
-        await Promise.all(
-          Object.entries(req.amount).map(async ([classification, budget]) => {
-            await this.budgetRepository.createBudget(
-              req.userId,
-              yearMonth,
-              Number(classification),
-              budget,
-            )
-          }),
-        )
-        return '예산 설정에 성공하였습니다.'
-      }
-    } catch (error) {
-      if (error instanceof ConflictException) {
-        throw error
-      } else {
-        throw new InternalServerErrorException('예산 설정에 실패했습니다.')
-      }
+    const existingBudget = await this.budgetRepository.findMonthlyBudget(
+      req.userId,
+      new Date(req.month),
+    )
+    if (Object.keys(existingBudget).length > 0) {
+      throw new ConflictException(BUDGET_ALREADY_EXIST)
     }
+
+    await this.processBudget(req, 'createBudget')
+    return '예산 설정에 성공하였습니다.'
   }
 
-  async updateBudget(req: ReqBudgetDto): Promise<string> {
-    try {
-      const yearMonth = new Date(req.month)
-      const existingBudget = await this.budgetRepository.findSameBudget(
-        yearMonth,
-        req.userId,
-      )
-      // 해당 달에 이미 예산이 있는지 확인
-      if (Object.keys(existingBudget).length > 0) {
-        await Promise.all(
-          Object.entries(req.amount).map(async ([classification, budget]) => {
-            await this.budgetRepository.updateBudget(
-              req.userId,
-              yearMonth,
-              Number(classification),
-              budget,
-            )
-          }),
-        )
-        return '예산 변경에 성공하였습니다.'
-      } else {
-        throw new NotFoundException(BUDGET_NOTFOUND)
-      }
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error
-      } else {
-        throw new InternalServerErrorException('예산 변경에 실패했습니다.')
-      }
-    }
+  async updateBudget(req: ReqBudgetDto): Promise<void> {
+    await this.monthlyBudget(req)
+    await this.processBudget(req, 'updateBudget')
   }
 
   async recommendBudget(req: ReqRecommendBudgetDto): Promise<object> {
-    try {
-      const yearMonth = new Date(req.month)
-      const findBudgetRatio = await this.budgetRepository.getMonthlyBudgetRatio(
-        yearMonth,
-        req.userId,
-      )
+    const yearMonth = new Date(req.month)
+    const findBudgetRatio = await this.budgetRepository.getMonthlyBudgetRatio(
+      yearMonth,
+      req.userId,
+    )
 
-      const totalBudget = Number(req.total)
+    const totalBudget = Number(req.total)
 
-      const recommendedBudget = calculateRecommendedBudget(
-        findBudgetRatio,
-        (ratio: number) => calculateBudget(totalBudget, ratio),
-      )
+    const recommendedBudget = calculateRecommendedBudget(
+      findBudgetRatio,
+      (ratio: number) => calculateBudget(totalBudget, ratio),
+    )
 
-      return {
-        message: '정상적으로 추천 예산이 생성되었습니다.',
-        recommendedBudget,
-      }
-    } catch (error) {
-      throw new InternalServerErrorException('추천예산 계산에 실패했습니다.')
+    return {
+      message: '정상적으로 추천 예산이 생성되었습니다.',
+      recommendedBudget,
     }
+  }
+
+  async monthlyBudget(
+    req: ReqGetMonthlyBudgetDto,
+  ): Promise<ResGetMonthlyBudgetDto[]> {
+    const findMonthlyBudget = await this.budgetRepository.findMonthlyBudget(
+      req.userId,
+      new Date(req.month),
+    )
+    if (Object.keys(findMonthlyBudget).length == 0) {
+      throw new NotFoundException(BUDGET_NOTFOUND)
+    }
+    return findMonthlyBudget
+  }
+
+  private async processBudget(
+    req: ReqBudgetDto,
+    message: string,
+  ): Promise<void> {
+    const yearMonth = new Date(req.month)
+    await Promise.all(
+      Object.entries(req.amount).map(async ([classification, budget]) => {
+        await this.budgetRepository[message](
+          req.userId,
+          yearMonth,
+          Number(classification),
+          budget,
+        )
+      }),
+    )
   }
 }

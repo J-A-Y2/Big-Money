@@ -1,6 +1,4 @@
-import { ReqRegisterDto } from '@user/interface/dto/registerUserDto'
 import { User } from '../entity/user.entity'
-import { UUID } from 'crypto'
 import { ReqUpdateUserAppDto } from '../dto/register.app.dto'
 
 export interface IUserRepository {
@@ -19,6 +17,12 @@ export interface IUserRepository {
   findById(id: string): Promise<User | null>
 
   findPasswordById(id: string): Promise<string>
+
+  findByEmailOrSave(
+    email: string,
+    name: string,
+    providerId: string,
+  ): Promise<User>
 
   updateUser(id: string, req: ReqUpdateUserAppDto): Promise<User>
 

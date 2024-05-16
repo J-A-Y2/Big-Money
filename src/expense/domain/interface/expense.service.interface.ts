@@ -12,9 +12,13 @@ export interface IExpenseService {
   createExpense(req: ReqExpenseDto): Promise<string>
   getMonthlyExpense(req: ReqMonthlyDto): Promise<object>
   getAllExpense(req: ReqMonthlyDto): Promise<ResGetExpenseDto[]>
-  getExpense(id: number, userId: string): Promise<ResDetailExpenseDto>
+  getExpense(expenseId: number, userId: string): Promise<ResDetailExpenseDto>
   getTotalExpenseByClassification(
     req: ReqMonthlyDto,
   ): Promise<ResClassificationExpenseDto[]>
-  // updateExpense(req: ReqExpenseDto): Promise<string>
+  updateExpense(
+    expenseId: number,
+    userId: string,
+    expenseData: ReqExpenseDto,
+  ): Promise<void>
 }

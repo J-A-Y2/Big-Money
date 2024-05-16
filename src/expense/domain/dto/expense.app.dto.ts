@@ -4,11 +4,7 @@ import {
   IsDateString,
   IsString,
   IsBoolean,
-  IsIn,
-  IsOptional,
 } from 'class-validator'
-import { Type } from 'class-transformer'
-import { UUID } from 'crypto'
 
 export class ReqExpenseDto {
   readonly userId: string
@@ -30,9 +26,17 @@ export class ReqExpenseDto {
   @IsNotEmpty({ message: '카테고리의 id는 필수적으로 입력해야 합니다.' })
   classificationId: number
 }
+export class UpdateExpenseDto extends ReqExpenseDto {
+  @IsNumber()
+  id: number
+
+  @IsNumber()
+  budgetId: number
+}
 
 export class ReqMonthlyDto {
   readonly userId: string
+
   @IsNotEmpty({ message: '지출 월은 필수적으로 입력해야 합니다.' })
   readonly month: string
 }

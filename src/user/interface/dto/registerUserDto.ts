@@ -10,13 +10,6 @@ import {
   VALIDATE_PASSWORD,
 } from '@common/messages/auth/auth.messages'
 import { Transform } from 'class-transformer'
-import {
-  USER_EMAIL,
-  USER_EMAIL_EXAMPLE,
-  USER_PWD,
-  USER_PWD_EXAMPLE,
-} from '@common/constants/user.constant'
-import { USER_ALREADY_EXIST } from '@common/messages/user/user.errors'
 import { ApiProperty } from '@nestjs/swagger'
 
 export class ReqRegisterDto {

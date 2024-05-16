@@ -11,7 +11,6 @@ import {
 } from 'typeorm'
 import { User } from '@user/domain/entity/user.entity'
 import { Classification } from '@classification/domain/classification.entity'
-import { UUID } from 'crypto'
 import { Expense } from '@expense/infra/db/expense.entity'
 
 @Entity()

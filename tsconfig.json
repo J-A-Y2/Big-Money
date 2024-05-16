@@ -26,7 +26,8 @@
       "@cache/*": ["src/cache/*"],
       "@expense/*": ["src/expense/*"],
       "@classification/*": ["src/classification/*"],
-      "@budget/*": ["src/budget/*"]
+      "@budget/*": ["src/budget/*"],
+      "@email/*": ["src/email/*"]
     }
   }
 }

@@ -19,7 +19,7 @@ export class HandleDateTime implements IHandleDateTime {
   }
 
   getMonth(date: Date) {
-    return ZonedDateTime.parse(date.toISOString()).monthValue() - 1
+    return ZonedDateTime.parse(date.toISOString()).monthValue()
   }
 
   getMonthDate(year: number, month: number) {

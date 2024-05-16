@@ -12,12 +12,14 @@ import {
   UsePipes,
   ValidationPipe,
   Query,
+  Patch,
 } from '@nestjs/common'
 import { IBudgetService } from '@budget/domain/interface/budget.service.interface'
 import { IBUDGET_SERVICE } from '@common/constants/provider.constant'
 import {
   ReqBudgetDto,
   ReqRecommendBudgetDto,
+  ResGetMonthlyBudgetDto,
 } from '@budget/domain/dto/budget.app.dto'
 import { JwtAuthGuard } from '@auth/infra/passport/guards/jwt.guard'
 import { CurrentUser } from '@common/decorators/user.decorator'
@@ -62,7 +64,7 @@ export class BudgetController {
     description: '예산 내용을 변경합니다.',
   })
   @ApiOkResponse({ description: 'ok' })
-  @Put()
+  @Patch()
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.NO_CONTENT)
   async updateBudget(
@@ -83,7 +85,7 @@ export class BudgetController {
   @Get()
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.OK)
-  async getMonthlybudget(
+  async getRecommendbudget(
     @CurrentUser() user: string,
     @Query() totalBudget: ReqRecommendBudgetDto,
   ): Promise<object> {
@@ -92,5 +94,26 @@ export class BudgetController {
       ...totalBudget,
     })
     return recommendBudget
+  }
+
+  // 예산 불러오기 api 추가하기 (월별 -> 쿼리값으로 년 월 받고 조회)
+
+  @ApiOperation({
+    summary: '예산을 월 기준으로 불러옵니다.',
+    description: '예산을 월 기준으로 불러옵니다.',
+  })
+  @ApiOkResponse({ description: 'ok' })
+  @Get('/monthlyBudget')
+  @UsePipes(ValidationPipe)
+  @HttpCode(HttpStatus.OK)
+  async getMonthlyBudget(
+    @CurrentUser() user: string,
+    @Query('month') month: string,
+  ): Promise<ResGetMonthlyBudgetDto[]> {
+    const monthlyBudget = await this.budegetService.monthlyBudget({
+      userId: user,
+      month,
+    })
+    return monthlyBudget
   }
 }
