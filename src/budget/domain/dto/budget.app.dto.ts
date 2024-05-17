@@ -5,6 +5,7 @@ import {
 } from '@common/decorators/budget.decorator'
 import { Transform } from 'class-transformer'
 import { Classification } from '@classification/domain/classification.entity'
+import { OmitType } from '@nestjs/swagger'
 
 export class ReqBudgetDto {
   readonly userId: string
@@ -19,24 +20,16 @@ export class ReqBudgetDto {
   readonly amount: Record<number, number>
 }
 
-export class ReqRecommendBudgetDto {
-  readonly userId: string
-
-  @IsNotEmpty({ message: '월 예산은 필수적으로 입력해야 합니다.' })
-  readonly month: string
-
+export class ReqRecommendBudgetDto extends OmitType(ReqBudgetDto, ['amount']) {
   @IsNotEmpty({ message: '총액은 필수적으로 입력해야 합니다.' })
   @IsNumber()
   @Transform(({ value }) => parseInt(value))
   readonly total: number
 }
 
-export class ReqGetMonthlyBudgetDto {
-  readonly userId: string
-
-  @IsNotEmpty({ message: '월 예산은 필수적으로 입력해야 합니다.' })
-  readonly month: string
-}
+export class ReqGetMonthlyBudgetDto extends OmitType(ReqBudgetDto, [
+  'amount',
+]) {}
 
 export class ResGetMonthlyBudgetDto {
   id: number

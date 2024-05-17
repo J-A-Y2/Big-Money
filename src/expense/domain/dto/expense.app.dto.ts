@@ -1,3 +1,4 @@
+import { OmitType, PickType } from '@nestjs/swagger'
 import {
   IsNotEmpty,
   IsNumber,
@@ -34,9 +35,9 @@ export class UpdateExpenseDto extends ReqExpenseDto {
   budgetId: number
 }
 
-export class ReqMonthlyDto {
-  readonly userId: string
-
+export class ReqMonthlyDto extends PickType(ReqExpenseDto, [
+  'userId',
+] as const) {
   @IsNotEmpty({ message: '지출 월은 필수적으로 입력해야 합니다.' })
   readonly month: string
 }
@@ -51,18 +52,18 @@ export class ReqDetailExpenseDto {
   userId: string
   id: number
 }
-export class ResDetailExpenseDto {
-  id: number
-  date: Date
-  amount: number
+export class ResDetailExpenseDto extends OmitType(ResGetExpenseDto, [
+  'classification',
+] as const) {
   memo: string
 }
 
-export class ReqClassificationExpenseDto {
-  userId: string
-}
+export class ReqClassificationExpenseDto extends OmitType(ReqDetailExpenseDto, [
+  'id',
+]) {}
 
-export class ResClassificationExpenseDto {
-  classificationId: number
+export class ResClassificationExpenseDto extends PickType(ReqExpenseDto, [
+  'classificationId',
+]) {
   total: string
 }

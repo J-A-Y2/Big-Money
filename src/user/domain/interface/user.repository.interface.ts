@@ -27,6 +27,4 @@ export interface IUserRepository {
   updateUser(id: string, req: ReqUpdateUserAppDto): Promise<User>
 
   deleteUser(id: string): Promise<User>
-
-  // changePassword(id: string, newPassword: string): Promise<void>
 }

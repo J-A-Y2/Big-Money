@@ -1,3 +1,5 @@
+import { PickType } from '@nestjs/swagger'
+
 export class ReqRegisterAppDto {
   readonly email: string
   readonly password: string
@@ -8,7 +10,7 @@ export class ReqRegisterAppDto {
   readonly gender: string
 }
 
-export class ReqUpdateUserAppDto {
-  readonly name: string
-  readonly nickname: string
-}
+export class ReqUpdateUserAppDto extends PickType(ReqRegisterAppDto, [
+  'name',
+  'nickname',
+] as const) {}

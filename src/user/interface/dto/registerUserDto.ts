@@ -10,7 +10,7 @@ import {
   VALIDATE_PASSWORD,
 } from '@common/messages/auth/auth.messages'
 import { Transform } from 'class-transformer'
-import { ApiProperty } from '@nestjs/swagger'
+import { ApiProperty, PickType } from '@nestjs/swagger'
 
 export class ReqRegisterDto {
   @ApiProperty()
@@ -45,14 +45,11 @@ export class ReqRegisterDto {
   @IsString()
   readonly gender: string
 }
-export class ReqUpdateDto {
+export class ReqUpdateDto extends PickType(ReqRegisterDto, [
+  'name',
+  'nickname',
+] as const) {
+  @ApiProperty()
+  @IsString()
   readonly userId: string
-
-  @ApiProperty()
-  @IsString()
-  readonly name: string
-
-  @ApiProperty()
-  @IsString()
-  readonly nickname: string
 }
