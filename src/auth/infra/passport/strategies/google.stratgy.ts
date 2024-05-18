@@ -3,10 +3,14 @@ import { PassportStrategy } from '@nestjs/passport'
 import { Profile, Strategy, VerifyCallback } from 'passport-google-oauth20'
 import { User } from '@user/domain/entity/user.entity'
 import { IUserRepository } from '@user/domain/interface/user.repository.interface'
+import { IPASSWORD_HASHER } from '@common/constants/provider.constant'
+import { IPasswordHasher } from '@common/interfaces/IPasswordHasher'
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(
+    @Inject(IPASSWORD_HASHER)
+    private readonly passwordHasher: IPasswordHasher,
     @Inject('IUserRepository')
     private readonly UserRepository: IUserRepository,
   ) {
@@ -20,16 +24,17 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 
   async validate(accessToken: string, refreshToken: string, profile: Profile) {
     console.log('accessToken', accessToken)
-    const { id, displayName, emails } = profile
     console.log('profile', profile)
+    const { id, displayName, emails } = profile
 
-    const providerId = id
+    const password = id
     const email = emails[0].value
+    const hashedPassword = await this.passwordHasher.hashPassword(password)
 
     const user: User = await this.UserRepository.findByEmailOrSave(
       email,
       displayName,
-      providerId,
+      hashedPassword,
     )
     return user
   }

@@ -25,7 +25,7 @@ import { CurrentUser } from '@common/decorators/user.decorator'
 import { ApiOperation, ApiOkResponse, ApiTags } from '@nestjs/swagger'
 import { getDeviceInfo } from '@common/utils/deviceInfo'
 import { GoogleAuthGuard } from '@auth/infra/passport/guards/google.guard'
-import { User } from '@user/domain/entity/user.entity'
+import { KakaoAuthGuard } from '@auth/infra/passport/guards/kakao.guard'
 
 @ApiTags('AUTH')
 @Controller('auth')
@@ -53,29 +53,30 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(LocalAuthGuard)
   async login(@Req() req: Request, @Res() res: Response): Promise<void> {
-    const { accessToken, refreshToken } = await this.authService.login({
-      id: req.user.id,
-      ip: req.ip,
-      device: getDeviceInfo(req),
-    })
+    await this.handleLogin(req, res)
+  }
 
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
-      expires: this.handleDateTime.getFewHoursLater(
-        jwtExpiration.accessTokenExpirationHours,
-      ),
-    })
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
-      expires: this.handleDateTime.getFewDaysLater(
-        jwtExpiration.refreshTokenExpirationDays,
-      ),
-    })
-    res.send('ok')
+  @Get('/google/redirect')
+  @ApiOperation({
+    summary: '구글 로그인 콜백',
+    description: '구글 로그인 후 처리를 담당합니다.',
+  })
+  @UseGuards(GoogleAuthGuard)
+  async googleRedirect(
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<void> {
+    await this.handleLogin(req, res)
+  }
+
+  @Get('/login/kakao')
+  @ApiOperation({
+    summary: '카카오 로그인',
+    description: '카카오 로그인 후 처리를 담당합니다.',
+  })
+  @UseGuards(KakaoAuthGuard)
+  async kakaoLogin(@Req() req: Request, @Res() res: Response): Promise<void> {
+    await this.handleLogin(req, res)
   }
 
   @ApiOperation({
@@ -111,6 +112,7 @@ export class AuthController {
         ip: req.ip,
         device: getDeviceInfo(req),
       })
+
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
         secure: true,
@@ -142,21 +144,31 @@ export class AuthController {
     await this.authService.checkPassword({ id: user, password: body.password })
   }
 
-  @Get('/google/login')
-  @UseGuards(GoogleAuthGuard)
-  async googleLogin() {
-    return {
-      msg: 'Google Authentication',
-    }
-  }
+  private async handleLogin(req: Request, res: Response): Promise<void> {
+    const { accessToken, refreshToken } = await this.authService.login({
+      id: req.user.id,
+      ip: req.ip,
+      device: getDeviceInfo(req),
+    })
 
-  @Get('/google/redirect')
-  @ApiOperation({
-    summary: '구글 로그인 콜백',
-    description: '구글 로그인 후 처리를 담당합니다.',
-  })
-  @UseGuards(GoogleAuthGuard)
-  async googleRedirect(@CurrentUser() user: User): Promise<User> {
-    return user
+    console.log('accessToken1', accessToken)
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      expires: this.handleDateTime.getFewHoursLater(
+        jwtExpiration.accessTokenExpirationHours,
+      ),
+    })
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      expires: this.handleDateTime.getFewDaysLater(
+        jwtExpiration.refreshTokenExpirationDays,
+      ),
+    })
+    res.send('ok')
   }
 }
