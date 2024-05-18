@@ -74,7 +74,7 @@ export class BudgetService implements IBudgetService {
       req.userId,
       new Date(req.month),
     )
-    if (Object.keys(findMonthlyBudget).length == 0) {
+    if (Object.keys(findMonthlyBudget).length === 0) {
       throw new NotFoundException(BUDGET_NOTFOUND)
     }
     return findMonthlyBudget

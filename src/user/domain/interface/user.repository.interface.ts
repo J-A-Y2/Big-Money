@@ -21,7 +21,7 @@ export interface IUserRepository {
   findByEmailOrSave(
     email: string,
     name: string,
-    providerId: string,
+    password: string,
   ): Promise<User>
 
   updateUser(id: string, req: ReqUpdateUserAppDto): Promise<User>

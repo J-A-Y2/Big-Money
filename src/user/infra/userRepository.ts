@@ -13,6 +13,31 @@ export class UserRepository implements IUserRepository {
     private readonly userRepository: Repository<User>,
   ) {}
 
+  private async findOrRestoreUser(userData: Partial<User>): Promise<User> {
+    const { email } = userData
+
+    let user = await this.userRepository.findOne({
+      where: { email },
+      withDeleted: true, // 소프트 삭제된 계정도 검색
+    })
+
+    if (user) {
+      if (user.deleteAt) {
+        // 소프트 삭제된 계정 복구
+        user.deleteAt = null
+        Object.assign(user, userData) // 새로운 데이터로 업데이트
+        const restoredUser = await this.userRepository.save(user)
+        return plainToClass(User, restoredUser)
+      } else {
+        throw new Error('이미 존재하는 이메일 계정입니다.')
+      }
+    } else {
+      const newUser = this.userRepository.create(userData) // 새로운 사용자 생성
+      const savedUser = await this.userRepository.save(newUser) // 새 사용자 저장
+      return plainToClass(User, savedUser)
+    }
+  }
+
   async createUser(
     email: string,
     password: string,
@@ -22,7 +47,7 @@ export class UserRepository implements IUserRepository {
     age: number,
     gender: string,
   ): Promise<User> {
-    const newUser = await this.userRepository.save({
+    const userData = {
       email,
       password,
       name,
@@ -30,8 +55,8 @@ export class UserRepository implements IUserRepository {
       birthdate,
       age,
       gender,
-    })
-    return plainToClass(User, newUser)
+    }
+    return this.findOrRestoreUser(userData)
   }
 
   async findByEmail(email: string): Promise<User> {
@@ -59,20 +84,10 @@ export class UserRepository implements IUserRepository {
   async findByEmailOrSave(
     email: string,
     name: string,
-    providerId: string,
+    password: string,
   ): Promise<User> {
-    const user = await this.userRepository.findOneBy({ email })
-    if (user) {
-      return user
-    }
-
-    const newUser = await this.userRepository.save({
-      email,
-      name,
-      providerId,
-    })
-
-    return newUser
+    const userData = { email, name, password }
+    return this.findOrRestoreUser(userData)
   }
 
   async updateUser(id: string, req: ReqUpdateUserAppDto): Promise<User> {
