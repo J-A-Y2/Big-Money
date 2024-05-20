@@ -21,12 +21,10 @@ export interface IUserRepository {
   findByEmailOrSave(
     email: string,
     name: string,
-    providerId: string,
+    password: string,
   ): Promise<User>
 
   updateUser(id: string, req: ReqUpdateUserAppDto): Promise<User>
 
   deleteUser(id: string): Promise<User>
-
-  // changePassword(id: string, newPassword: string): Promise<void>
 }

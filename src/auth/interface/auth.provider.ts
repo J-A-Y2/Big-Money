@@ -1,5 +1,6 @@
 import { AuthService } from '@auth/app/auth.service'
 import { GoogleStrategy } from '@auth/infra/passport/strategies/google.stratgy'
+import { KakaoStrategy } from '@auth/infra/passport/strategies/kakao.stratgy'
 import { LocalStrategy } from '@auth/infra/passport/strategies/local.strategy'
 import { TokenService } from '@auth/infra/token.sevice'
 import { CacheService } from '@cache/cache.service'
@@ -14,6 +15,7 @@ import { HandleDateTime } from '@common/utils/handleDateTime'
 export const AuthProvider = [
   LocalStrategy,
   GoogleStrategy,
+  KakaoStrategy,
   {
     provide: ITOKEN_SERVICE,
     useClass: TokenService,
