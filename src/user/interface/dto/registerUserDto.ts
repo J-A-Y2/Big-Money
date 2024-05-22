@@ -35,7 +35,7 @@ export class ReqRegisterDto {
 
   @ApiProperty()
   @IsDateString()
-  readonly birthdate: Date
+  readonly birthdate: string
 
   @ApiProperty()
   @IsInt()
@@ -48,8 +48,4 @@ export class ReqRegisterDto {
 export class ReqUpdateDto extends PickType(ReqRegisterDto, [
   'name',
   'nickname',
-] as const) {
-  @ApiProperty()
-  @IsString()
-  readonly userId: string
-}
+] as const) {}

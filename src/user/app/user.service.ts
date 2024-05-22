@@ -21,7 +21,10 @@ import {
   IUSER_REPOSITORY,
   IAUTH_SERVICE,
 } from '@common/constants/provider.constant'
-import { IUserService } from '@user/domain/interface/user.service.interface'
+import {
+  CreateUser,
+  IUserService,
+} from '@user/domain/interface/user.service.interface'
 import { IPasswordHasher } from '@common/interfaces/IPasswordHasher'
 import { REGISTER_SUCCESS_MESSAGE } from '@common/messages/user/user.messages'
 import { User } from '@user/domain/entity/user.entity'
@@ -63,7 +66,7 @@ export class UserService implements IUserService {
     })
   }
 
-  async register(newUser: ReqRegisterAppDto): Promise<User> {
+  async register(newUser: ReqRegisterAppDto): Promise<CreateUser> {
     const { email, password, name, nickname, birthdate, age, gender } = newUser
 
     const existingUser = await this.userRepository.findByEmail(email)
@@ -91,7 +94,7 @@ export class UserService implements IUserService {
       `${REGISTER_SUCCESS_MESSAGE}- 가입 이메일:${createdUser.email}, 유저 ID:${createdUser.id}, 가입 일시:${createdUser.createdAt}`,
     )
 
-    return createdUser
+    return { message: '회원가입에 성공했습니다.' }
   }
 
   async updateUser(userId: string, body: ReqUpdateUserAppDto): Promise<object> {
