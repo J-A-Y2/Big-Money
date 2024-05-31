@@ -61,7 +61,7 @@ export class User extends BaseEntity {
   })
   @Column({ nullable: true })
   @Expose()
-  birthdate: Date
+  birthdate: string
 
   @ApiProperty({
     example: '26',

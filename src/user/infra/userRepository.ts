@@ -43,7 +43,7 @@ export class UserRepository implements IUserRepository {
     password: string,
     name: string,
     nickname: string,
-    birthdate: Date,
+    birthdate: string,
     age: number,
     gender: string,
   ): Promise<User> {
