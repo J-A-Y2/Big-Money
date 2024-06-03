@@ -22,10 +22,6 @@ export class MockRepositoryFactory {
         mockRepository[key] = jest.fn()
       })
 
-    if (!mockRepository['findByEmail']) {
-      mockRepository['findByEmail'] = jest.fn()
-    }
-
     return mockRepository
   }
 }

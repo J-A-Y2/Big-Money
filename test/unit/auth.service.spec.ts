@@ -1,71 +1,39 @@
 import { Test, TestingModule } from '@nestjs/testing'
-import { AuthService } from '../../src/auth/app/auth.service'
+import { AuthService } from '@auth/app/auth.service'
+import { IUserRepository } from '@user/domain/interface/user.repository.interface'
+import {
+  ITokenService,
+  RefreshInfo,
+} from '@auth/domain/interfaces/token.service.interface'
+import { ICacheService } from '@cache/cache.service.interface'
+import { IPasswordHasher } from '@common/interfaces/IPasswordHasher'
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import {
   ICACHE_SERVICE,
   IPASSWORD_HASHER,
   ITOKEN_SERVICE,
   IUSER_REPOSITORY,
 } from '@common/constants/provider.constant'
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
-import { ReqLoginAppDto } from '@auth/domain/dto/login.app.dto'
-import { ResValidateUserAppDto } from '@auth/domain/dto/vaildateUser.app.dto'
+import { ReqValidateUserAppDto } from '@auth/domain/dto/vaildateUser.app.dto'
+import { ReqCheckPasswordAppDto } from '@auth/domain/dto/checkPassword.app.dto'
+import { ReqLoginAppDto, ResLoginAppDto } from '@auth/domain/dto/login.app.dto'
+import { ReqLogoutAppDto } from '@auth/domain/dto/logout.app.dto'
+import { MockServiceFactory } from '../mockFactory'
+import { UnauthorizedException, NotFoundException } from '@nestjs/common'
+import { plainToClass } from 'class-transformer'
+import { TokenService } from '@auth/infra/token.sevice'
+import { UserRepository } from '@user/infra/userRepository'
+import { CacheService } from '@cache/cache.service'
+import { PasswordHasher } from '@common/passwordHasher'
+import { ReqRefreshAppDto } from '@auth/domain/dto/refresh.app dto'
+import { User } from '@user/domain/entity/user.entity'
 
 describe('AuthService', () => {
-  let service: AuthService
-
-  const mockUserRepository = {
-    findByEmail: jest.fn(),
-    findById: jest.fn(),
-    findPasswordById: jest.fn(),
-  }
-
-  const mockPasswordHasher = {
-    comparePassword: jest.fn(),
-  }
-
-  const mockLogger = {
-    log: jest.fn(),
-    error: jest.fn(),
-  }
-
-  const mockCacheService = {
-    getFromCache: jest.fn().mockResolvedValue({
-      refreshToken: 'validRefreshToken',
-      ip: '127.0.0.1',
-      device: {},
-    }),
-    setCache: jest.fn(),
-    deleteCache: jest.fn(),
-  }
-
-  const mockTokenService = {
-    decodeToken: jest
-      .fn()
-      .mockResolvedValue({ id: '123e4567-e89b-12d3-a456-426614174000' }),
-    generateAccessToken: jest.fn().mockResolvedValue('testToken'),
-    generateRefreshToken: jest.fn().mockResolvedValue('testToken'),
-  }
-
-  const vaildateUser: ResValidateUserAppDto = {
-    id: '123e4567-e89b-12d3-a456-426614174000',
-    email: 'test@test.com',
-    createdAt: new Date(),
-  }
-  const mockUser: ReqLoginAppDto = {
-    id: '123e4567-e89b-12d3-a456-426614174000',
-    ip: '127.0.0.1',
-    device: {
-      browser: 'Chrome',
-      platform: 'Windows',
-      version: '89',
-    },
-  }
-
-  const mockDevice = {
-    browser: 'Chrome',
-    platform: 'Windows',
-    version: '89',
-  }
+  let authService: AuthService
+  let userRepository: jest.Mocked<IUserRepository>
+  let tokenService: jest.Mocked<ITokenService>
+  let cacheService: jest.Mocked<ICacheService>
+  let passwordHasher: jest.Mocked<IPasswordHasher>
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -73,144 +41,231 @@ describe('AuthService', () => {
         AuthService,
         {
           provide: ITOKEN_SERVICE,
-          useValue: mockTokenService,
+          useValue: MockServiceFactory.getMockService(TokenService),
         },
         {
           provide: IUSER_REPOSITORY,
-          useValue: mockUserRepository,
+          useValue: MockServiceFactory.getMockService(UserRepository),
         },
         {
           provide: WINSTON_MODULE_PROVIDER,
-          useValue: mockLogger,
+          useValue: {
+            log: jest.fn(),
+            error: jest.fn(),
+          },
         },
         {
           provide: ICACHE_SERVICE,
-          useValue: mockCacheService,
+          useValue: MockServiceFactory.getMockService(CacheService),
         },
         {
           provide: IPASSWORD_HASHER,
-          useValue: mockPasswordHasher,
+          useValue: MockServiceFactory.getMockService(PasswordHasher),
         },
       ],
     }).compile()
 
-    service = module.get<AuthService>(AuthService)
+    authService = module.get<AuthService>(AuthService)
+    userRepository = module.get(IUSER_REPOSITORY)
+    tokenService = module.get(ITOKEN_SERVICE)
+    cacheService = module.get(ICACHE_SERVICE)
+    passwordHasher = module.get(IPASSWORD_HASHER)
   })
 
-  it('should be defined', () => {
-    expect(service).toBeDefined()
+  afterEach(() => {
+    jest.clearAllMocks()
   })
 
-  it('should return user if credentials are valid', async () => {
-    const mockPassword = 'hashedPassword'
-    mockUserRepository.findByEmail.mockResolvedValue(mockUser)
-    mockUserRepository.findPasswordById.mockResolvedValue(mockPassword)
-    mockPasswordHasher.comparePassword.mockResolvedValue(true)
-
-    const result = await service.validateUser({
-      email: mockUser.id,
-      password: 'password',
-    })
-    expect(result).toEqual(mockUser)
+  const createMockUser = (): User => ({
+    id: 'userId',
+    email: 'test@test.com',
+    createdAt: new Date(),
+    password: 'hashedPassword',
+    name: 'name',
+    nickname: 'nickname',
+    birthdate: '1997-01-01',
+    age: 30,
+    gender: 'male',
+    updatedAt: undefined,
+    deleteAt: undefined,
+    expenses: [],
+    hasId: jest.fn(),
+    save: jest.fn(),
+    remove: jest.fn(),
+    softRemove: jest.fn(),
+    recover: jest.fn(),
+    reload: jest.fn(),
   })
 
-  it('should throw an error if user does not exist', async () => {
-    mockUserRepository.findByEmail.mockResolvedValue(null)
-
-    await expect(
-      service.validateUser({ email: 'test@test.com', password: 'password' }),
-    ).rejects.toThrow()
-  })
-
-  it('should throw an error if password is incorrect', async () => {
-    const mockUser = { id: 1, email: 'test@test.com' }
-    const mockPassword = 'hashedPassword'
-    mockUserRepository.findByEmail.mockResolvedValue(mockUser)
-    mockUserRepository.findPasswordById.mockResolvedValue(mockPassword)
-    mockPasswordHasher.comparePassword.mockResolvedValue(false)
-
-    await expect(
-      service.validateUser({
-        email: mockUser.email,
-        password: 'wrongpassword',
-      }),
-    ).rejects.toThrow()
-  })
-
-  // login 테스트
-  it('should return token if credentials are valid', async () => {
-    const mockToken = 'testToken'
-    mockUserRepository.findByEmail.mockResolvedValue(mockUser)
-    mockTokenService.generateAccessToken.mockResolvedValue(mockToken)
-    mockTokenService.generateRefreshToken.mockResolvedValue(mockToken)
-
-    const result = await service.login(mockUser)
-    expect(await result.accessToken).toEqual(mockToken)
-    expect(await result.refreshToken).toEqual(mockToken)
-  })
-
-  // checkPassword 테스트
-  it('should not throw an error if password is correct', async () => {
-    const mockPassword = 'hashedPassword'
-    mockUserRepository.findPasswordById.mockResolvedValue(mockPassword)
-    mockPasswordHasher.comparePassword.mockResolvedValue(true)
-
-    await expect(
-      service.checkPassword({
-        id: '123e4567-e89b-12d3-a456-426614174000',
+  describe('validateUser', () => {
+    it('should return user if email and password are correct', async () => {
+      const req: ReqValidateUserAppDto = {
+        email: 'test@test.com',
         password: 'password',
-      }),
-    ).resolves.not.toThrow()
-  })
+      }
+      const user = createMockUser()
+      const userPassword = 'hashedPassword'
 
-  it('should throw an error if password is incorrect', async () => {
-    const mockPassword = 'hashedPassword'
-    mockUserRepository.findPasswordById.mockResolvedValue(mockPassword)
-    mockPasswordHasher.comparePassword.mockResolvedValue(false)
+      userRepository.findByEmail.mockResolvedValue(user)
+      userRepository.findPasswordById.mockResolvedValue(userPassword)
+      passwordHasher.comparePassword.mockResolvedValue(true)
 
-    await expect(
-      service.checkPassword({
-        id: '123e4567-e89b-12d3-a456-426614174000',
-        password: 'wrongpassword',
-      }),
-    ).rejects.toThrow()
-  })
-
-  // logout 테스트
-  it('should not throw an error', async () => {
-    await expect(
-      service.logout({ id: '123e4567-e89b-12d3-a456-426614174000' }),
-    ).resolves.not.toThrow()
-  })
-
-  // refresh 테스트
-  it('should return new access token if refresh token is valid', async () => {
-    const validRefreshToken = 'validRefreshToken'
-    const mockToken = 'newAccessToken'
-
-    const decoded = mockTokenService.decodeToken(validRefreshToken)
-
-    mockUserRepository.findById.mockResolvedValue({
-      id: decoded.id,
-      email: 'test@test.com',
+      const result = await authService.validateUser(req)
+      expect(result).toEqual(user)
     })
 
-    mockCacheService.getFromCache.mockResolvedValue({
-      refreshToken: validRefreshToken,
-      ip: '127.0.0.1',
-      device: mockDevice,
+    it('should throw NotFoundException if user does not exist', async () => {
+      const req: ReqValidateUserAppDto = {
+        email: 'test@test.com',
+        password: 'password',
+      }
+
+      userRepository.findByEmail.mockResolvedValue(null)
+
+      await expect(authService.validateUser(req)).rejects.toThrow(
+        NotFoundException,
+      )
     })
 
-    mockTokenService.generateAccessToken.mockResolvedValue(mockToken)
+    it('should throw UnauthorizedException if password is incorrect', async () => {
+      const req: ReqValidateUserAppDto = {
+        email: 'test@test.com',
+        password: 'password',
+      }
+      const userPassword = 'hashedPassword'
 
-    const result = await service.refresh({
-      refreshToken: validRefreshToken,
-      ip: '127.0.0.1',
-      device: mockDevice,
+      userRepository.findPasswordById.mockResolvedValue(userPassword)
+      passwordHasher.comparePassword.mockResolvedValue(false)
+
+      await expect(authService.validateUser(req)).rejects.toThrow(
+        NotFoundException,
+      )
+    })
+  })
+
+  describe('login', () => {
+    it('should return access token and refresh token', async () => {
+      const req: ReqLoginAppDto = {
+        id: 'userId',
+        ip: '127.0.0.1',
+        device: {
+          browser: 'Chrome',
+          platform: 'Windows',
+          version: '91.0.4472.124',
+        },
+      }
+      const accessToken = 'accessToken'
+      const refreshToken = 'refreshToken'
+
+      tokenService.generateAccessToken.mockReturnValue(accessToken)
+      tokenService.generateRefreshToken.mockReturnValue(refreshToken)
+      cacheService.setCache.mockResolvedValue(undefined)
+
+      const result = await authService.login(req)
+
+      expect(result).toEqual(
+        plainToClass(ResLoginAppDto, { accessToken, refreshToken }),
+      )
+      expect(cacheService.setCache).toHaveBeenCalledWith(
+        `refreshToken:${req.id}`,
+        { refreshToken, ip: req.ip, device: req.device },
+        expect.any(Number),
+      )
+    })
+  })
+
+  describe('checkPassword', () => {
+    it('should throw UnauthorizedException if password is incorrect', async () => {
+      const req: ReqCheckPasswordAppDto = {
+        id: 'userId',
+        password: 'wrongPassword',
+      }
+      const userPassword = 'hashedPassword'
+
+      userRepository.findPasswordById.mockResolvedValue(userPassword)
+      passwordHasher.comparePassword.mockResolvedValue(false)
+
+      await expect(authService.checkPassword(req)).rejects.toThrow(
+        UnauthorizedException,
+      )
     })
 
-    expect(result).toEqual({
-      accessToken: mockToken,
+    it('should not throw error if password is correct', async () => {
+      const req: ReqCheckPasswordAppDto = {
+        id: 'userId',
+        password: 'correctPassword',
+      }
+      const userPassword = 'hashedPassword'
+
+      userRepository.findPasswordById.mockResolvedValue(userPassword)
+      passwordHasher.comparePassword.mockResolvedValue(true)
+
+      await expect(authService.checkPassword(req)).resolves.not.toThrow()
+    })
+  })
+
+  describe('logout', () => {
+    it('should delete user cache', async () => {
+      const req: ReqLogoutAppDto = { id: 'userId' }
+
+      cacheService.deleteCache.mockResolvedValue(undefined)
+
+      await authService.logout(req)
+
+      expect(cacheService.deleteCache).toHaveBeenCalledWith(`user:${req.id}`)
+    })
+  })
+
+  describe('refresh', () => {
+    it('should return new access token if refresh token is valid', async () => {
+      const req: ReqRefreshAppDto = {
+        refreshToken: 'refreshToken',
+        ip: '127.0.0.1',
+        device: {
+          browser: 'Chrome',
+          platform: 'Windows',
+          version: '91.0.4472.124',
+        },
+      }
+      const decoded = { id: 'userId' }
+      const redisRefreshInfo: RefreshInfo = {
+        refreshToken: 'refreshToken',
+        ip: '127.0.0.1',
+        device: {
+          browser: 'Chrome',
+          platform: 'Windows',
+          version: '91.0.4472.124',
+        },
+      }
+      const user = createMockUser()
+      const newAccessToken = 'newAccessToken'
+
+      tokenService.decodeToken.mockReturnValue(decoded)
+      cacheService.getFromCache.mockResolvedValue(redisRefreshInfo)
+      userRepository.findById.mockResolvedValue(user)
+      tokenService.generateAccessToken.mockReturnValue(newAccessToken)
+
+      const result = await authService.refresh(req)
+
+      expect(result).toEqual({ accessToken: newAccessToken })
+    })
+
+    it('should throw UnauthorizedException if refresh token is invalid', async () => {
+      const req: ReqRefreshAppDto = {
+        refreshToken: 'invalidRefreshToken',
+        ip: '127.0.0.1',
+        device: {
+          browser: 'Chrome',
+          platform: 'Windows',
+          version: '91.0.4472.124',
+        },
+      }
+
+      tokenService.decodeToken.mockReturnValue(null)
+
+      await expect(authService.refresh(req)).rejects.toThrow(
+        UnauthorizedException,
+      )
     })
   })
 })
