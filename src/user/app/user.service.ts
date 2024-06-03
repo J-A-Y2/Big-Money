@@ -101,7 +101,7 @@ export class UserService implements IUserService {
     const existingUser = await this.userRepository.findById(userId)
 
     if (!existingUser) {
-      throw new ConflictException(USER_NOT_FOUND)
+      throw new NotFoundException(USER_NOT_FOUND)
     }
     const updatedUser = await this.userRepository.updateUser(userId, body)
 
