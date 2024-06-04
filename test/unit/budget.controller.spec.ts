@@ -1,28 +1,46 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { BudgetController } from '@budget/interface/budget.controller'
+import { IBudgetService } from '@budget/domain/interface/budget.service.interface'
 import { IBUDGET_SERVICE } from '@common/constants/provider.constant'
 import { JwtAuthGuard } from '@auth/infra/passport/guards/jwt.guard'
-import { Request } from 'express'
-import { IBudgetService } from '@budget/domain/interface/budget.service.interface'
+import {
+  ReqBudgetDto,
+  ReqRecommendBudgetDto,
+  ResGetMonthlyBudgetDto,
+} from '@budget/domain/dto/budget.app.dto'
+import { MockServiceFactory } from '../mockFactory'
+import { BudgetService } from '@budget/app/budget.service'
+import { Classification } from '@classification/domain/classification.entity'
 
 describe('BudgetController', () => {
-  let controller: BudgetController
+  let budgetController: BudgetController
+  let budgetService: jest.Mocked<BudgetService>
 
-  const mockBudgetService = {
-    createBudget: jest.fn(),
-    updateBudget: jest.fn(),
-    recommendBudget: jest.fn(),
-  }
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [BudgetController],
+      providers: [
+        {
+          provide: IBUDGET_SERVICE,
+          useValue: MockServiceFactory.getMockService(BudgetService),
+        },
+      ],
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({ canActivate: jest.fn(() => true) })
+      .compile()
 
-  const mockRequest = {
-    user: { id: 'fadc33cf-4361-4385-8528-424402a0e9f1' },
-    headers: {},
-    ip: '127.0.0.1',
-  } as unknown as Request
+    budgetController = module.get<BudgetController>(BudgetController)
+    budgetService = module.get(IBUDGET_SERVICE)
+  })
 
-  const mockBudgetBody = {
-    userId: mockRequest.user.id,
-    month: '2023-11',
+  afterEach(() => {
+    jest.clearAllMocks()
+  })
+
+  const reqBudgetDto: ReqBudgetDto = {
+    userId: 'testUserId',
+    month: '2024-01',
     amount: {
       '1': 2000,
       '2': 26000,
@@ -45,75 +63,85 @@ describe('BudgetController', () => {
     },
   }
 
-  const mockRecommendBudget = {
-    userId: mockRequest.user.id,
-    month: '2023-11',
-    total: 2000000,
-  }
+  describe('createBudget', () => {
+    it('should create a budget', async () => {
+      const userId = 'userId'
+      const expectedResult = 'success'
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [BudgetController],
-      providers: [{ provide: IBUDGET_SERVICE, useValue: mockBudgetService }],
+      budgetService.createBudget.mockResolvedValue(expectedResult)
+
+      const result = await budgetController.createBudget(userId, reqBudgetDto)
+
+      expect(result).toEqual(expectedResult)
+      expect(budgetService.createBudget).toHaveBeenCalledWith({
+        userId,
+        ...reqBudgetDto,
+      })
     })
-      .overrideGuard(JwtAuthGuard)
-      .useValue({ canActivate: jest.fn().mockResolvedValue(true) })
-      .compile()
-    controller = module.get<BudgetController>(BudgetController)
-  })
-  it('should be defiend', () => {
-    expect(controller).toBeDefined()
-  })
-  it('should create a budget', async () => {
-    const userId = mockRequest.user.id
-
-    const createBudgetMock = jest
-      .spyOn(mockBudgetService, 'createBudget')
-      .mockResolvedValue('createdBudget')
-
-    const result = await controller.createBudget(mockRequest, mockBudgetBody)
-
-    expect(createBudgetMock).toHaveBeenCalledWith({
-      userId,
-      ...mockBudgetBody,
-    })
-
-    expect(result).toEqual('createdBudget')
   })
 
-  it('should update a budget', async () => {
-    const userId = mockRequest.user.id
+  describe('updateBudget', () => {
+    it('should update a budget', async () => {
+      const userId = 'userId'
 
-    const updateBudgetMock = jest
-      .spyOn(mockBudgetService, 'updateBudget')
-      .mockResolvedValue('updateBudget')
+      await budgetController.updateBudget(userId, reqBudgetDto)
 
-    const result = await controller.updateBudget(mockRequest, mockBudgetBody)
-
-    expect(updateBudgetMock).toHaveBeenCalledWith({
-      userId,
-      ...mockBudgetBody,
+      expect(budgetService.updateBudget).toHaveBeenCalledWith({
+        userId,
+        ...reqBudgetDto,
+      })
     })
-
-    expect(result).toEqual('updateBudget')
   })
-  it('should return a recommendBudget', async () => {
-    const userId = mockRequest.user.id
 
-    const recommendBudgetMock = jest
-      .spyOn(mockBudgetService, 'recommendBudget')
-      .mockResolvedValue('recommendBudget')
+  describe('getRecommendBudget', () => {
+    it('should return recommended budget', async () => {
+      const reqRecommendBudgetDto: ReqRecommendBudgetDto = {
+        userId: 'testUserId',
+        month: '2024-01',
+        total: 5000,
+      }
+      const userId = 'userId'
+      const expectedResult = { Food: 2000, Entertainment: 1500 }
 
-    const result = await controller.getMonthlybudget(
-      mockRequest,
-      mockRecommendBudget,
-    )
+      budgetService.recommendBudget.mockResolvedValue(expectedResult)
 
-    expect(recommendBudgetMock).toHaveBeenCalledWith({
-      userId,
-      ...mockRecommendBudget,
+      const result = await budgetController.getRecommendbudget(
+        userId,
+        reqRecommendBudgetDto,
+      )
+
+      expect(result).toEqual(expectedResult)
+      expect(budgetService.recommendBudget).toHaveBeenCalledWith({
+        userId,
+        ...reqRecommendBudgetDto,
+      })
     })
+  })
 
-    expect(result).toEqual('recommendBudget')
+  describe('getMonthlyBudget', () => {
+    it('should return monthly budget', async () => {
+      const month = '2024-05'
+      const userId = 'userId'
+      const expectedResult: ResGetMonthlyBudgetDto[] = [
+        {
+          id: 1,
+          amount: 1220,
+          month: '2024-01',
+          created_at: new Date(),
+          updated_at: new Date(),
+          classification: new Classification(),
+        },
+      ]
+
+      budgetService.monthlyBudget.mockResolvedValue(expectedResult)
+
+      const result = await budgetController.getMonthlyBudget(userId, month)
+
+      expect(result).toEqual(expectedResult)
+      expect(budgetService.monthlyBudget).toHaveBeenCalledWith({
+        userId,
+        month,
+      })
+    })
   })
 })

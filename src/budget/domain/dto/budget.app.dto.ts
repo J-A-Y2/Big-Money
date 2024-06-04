@@ -34,7 +34,7 @@ export class ReqGetMonthlyBudgetDto extends OmitType(ReqBudgetDto, [
 export class ResGetMonthlyBudgetDto {
   id: number
   amount: number
-  month: Date
+  month: string
   created_at: Date
   updated_at: Date
   classification: Classification
