@@ -24,7 +24,7 @@ describe('BudgetService', () => {
   // 공통으로 사용할 테스트 데이터
   const reqBudgetDto: ReqBudgetDto = {
     userId: 'testUserId',
-    month: new Date(),
+    month: '2024-01',
     amount: {
       '1': 2000,
       '2': 26000,
@@ -35,13 +35,13 @@ describe('BudgetService', () => {
 
   const reqRecommendBudgetDto: ReqRecommendBudgetDto = {
     userId: 'testUserId',
-    month: new Date(),
+    month: '2024-01',
     total: 50000,
   }
 
   const reqGetMonthlyBudgetDto: ReqGetMonthlyBudgetDto = {
     userId: 'testUserId',
-    month: new Date(),
+    month: '2024-01',
   }
 
   const classification: Classification = {
