@@ -1,131 +1,176 @@
-import { Test, TestingModule } from '@nestjs/testing'
+import { TestBed } from '@automock/jest'
 import { BudgetService } from '@budget/app/budget.service'
+import { IBudgetRepository } from '@budget/domain/interface/budget.repository.interface'
 import { IBUDGET_REPOSITORY } from '@common/constants/provider.constant'
-import { v4 as uuidv4 } from 'uuid'
+import {
+  ReqBudgetDto,
+  ReqRecommendBudgetDto,
+  ResGetMonthlyBudgetDto,
+  ReqGetMonthlyBudgetDto,
+} from '@budget/domain/dto/budget.app.dto'
+import { ConflictException, NotFoundException } from '@nestjs/common'
+import { calculateRecommendedBudget } from '@common/utils/budgetRecommend'
+import { Classification } from '@classification/domain/classification.entity'
+
+jest.mock('@common/utils/budgetRecommend', () => ({
+  calculateBudget: jest.fn(),
+  calculateRecommendedBudget: jest.fn(),
+}))
 
 describe('BudgetService', () => {
-  let service: BudgetService
+  let budgetService: BudgetService
+  let budgetRepository: jest.Mocked<IBudgetRepository>
 
-  //이런식으로 공유 픽스처를 사용하지 않기 -> 나중에 리팩터링
-  const mockBudgetRespositroy = {
-    findSameBudget: jest.fn(),
-    createBudget: jest.fn(),
-    updateBudget: jest.fn(),
-    getMonthlyBudgetRatio: jest.fn(),
-  }
-
-  const mockBudget = {
-    userId: uuidv4(),
-    month: '2023-11',
+  // 공통으로 사용할 테스트 데이터
+  const reqBudgetDto: ReqBudgetDto = {
+    userId: 'testUserId',
+    month: '2024-01',
     amount: {
       '1': 2000,
       '2': 26000,
       '3': 32000,
       '4': 16200,
-      '5': 58900,
-      '6': 50000,
-      '7': 50000,
-      '8': 35000,
-      '9': 50000,
-      '10': 45000,
-      '11': 200000,
-      '12': 65000,
-      '13': 45000,
-      '14': 32000,
-      '15': 300000,
-      '16': 3000,
-      '17': 15400,
-      '18': 12000,
     },
   }
 
+  const reqRecommendBudgetDto: ReqRecommendBudgetDto = {
+    userId: 'testUserId',
+    month: '2024-01',
+    total: 50000,
+  }
+
+  const reqGetMonthlyBudgetDto: ReqGetMonthlyBudgetDto = {
+    userId: 'testUserId',
+    month: '2024-01',
+  }
+
+  const classification: Classification = {
+    id: 1,
+    classification: 'Food',
+    expenses: [],
+    hasId: jest.fn(),
+    save: jest.fn(),
+    remove: jest.fn(),
+    softRemove: jest.fn(),
+    recover: jest.fn(),
+    reload: jest.fn(),
+  }
+
+  const expectedMonthlyBudget: ResGetMonthlyBudgetDto[] = [
+    {
+      id: 1,
+      amount: 1220,
+      month: new Date(),
+      created_at: new Date(),
+      updated_at: new Date(),
+      classification,
+    },
+  ]
+
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        BudgetService,
-        { provide: IBUDGET_REPOSITORY, useValue: mockBudgetRespositroy },
-      ],
-    }).compile()
+    const { unit, unitRef } = TestBed.create(BudgetService).compile()
 
-    service = module.get<BudgetService>(BudgetService)
+    budgetService = unit
+    budgetRepository = unitRef.get(IBUDGET_REPOSITORY)
   })
 
-  it('should be defined', () => {
-    expect(service).toBeDefined()
+  afterEach(() => {
+    jest.clearAllMocks()
   })
 
-  it('should create budget if it does not exist', async () => {
-    mockBudgetRespositroy.findSameBudget.mockResolvedValue({})
+  describe('createBudget', () => {
+    it('should create a budget successfully', async () => {
+      budgetRepository.findMonthlyBudget.mockResolvedValue([])
 
-    await expect(service.createBudget(mockBudget)).resolves.toBe(
-      '예산 설정에 성공하였습니다.',
-    )
+      const result = await budgetService.createBudget(reqBudgetDto)
+
+      expect(result).toBe('예산 설정에 성공하였습니다.')
+      expect(budgetRepository.findMonthlyBudget).toHaveBeenCalledWith(
+        reqBudgetDto.userId,
+        new Date(reqBudgetDto.month),
+      )
+      expect(budgetRepository.createBudget).toHaveBeenCalledTimes(4)
+    })
+
+    it('should throw ConflictException if budget already exists', async () => {
+      budgetRepository.findMonthlyBudget.mockResolvedValue([
+        {} as ResGetMonthlyBudgetDto,
+      ])
+
+      await expect(budgetService.createBudget(reqBudgetDto)).rejects.toThrow(
+        ConflictException,
+      )
+    })
   })
 
-  it('should update budget if it exists', async () => {
-    mockBudgetRespositroy.findSameBudget.mockResolvedValue(mockBudget)
+  describe('updateBudget', () => {
+    it('should update a budget successfully', async () => {
+      budgetRepository.findMonthlyBudget.mockResolvedValue([
+        {} as ResGetMonthlyBudgetDto,
+      ])
 
-    await expect(service.updateBudget(mockBudget)).resolves.toBe(
-      '예산 변경에 성공하였습니다.',
-    )
+      await budgetService.updateBudget(reqBudgetDto)
+
+      expect(budgetRepository.updateBudget).toHaveBeenCalledTimes(4)
+    })
+
+    it('should throw NotFoundException if budget does not exist', async () => {
+      budgetRepository.findMonthlyBudget.mockResolvedValue([])
+
+      await expect(budgetService.updateBudget(reqBudgetDto)).rejects.toThrow(
+        NotFoundException,
+      )
+    })
   })
 
-  it('should return recommended budget', async () => {
-    const mockReq = {
-      userId: uuidv4(),
-      month: '2023-11',
-      total: 2000000,
-    }
+  describe('recommendBudget', () => {
+    it('should return recommended budget successfully', async () => {
+      const findBudgetRatio = { '1': 0.1, '2': 0.2, '3': 0.3, '4': 0.4 }
+      const expectedResult = {
+        message: '정상적으로 추천 예산이 생성되었습니다.',
+        recommendedBudget: {},
+      }
 
-    const mockRatio = {
-      '1': 0.04,
-      '2': 0.48,
-      '3': 0.6,
-      '4': 0.3,
-      '5': 1.1,
-      '6': 0.93,
-      '7': 0.93,
-      '8': 0.65,
-      '9': 0.93,
-      '10': 0.84,
-      '11': 3.73,
-      '12': 1.21,
-      '13': 0.84,
-      '14': 0.6,
-      '15': 5.59,
-      '16': 0.06,
-      '17': 0.29,
-      '18': 0.22,
-    }
+      budgetRepository.getMonthlyBudgetRatio.mockResolvedValue(findBudgetRatio)
+      ;(calculateRecommendedBudget as jest.Mock).mockReturnValue(
+        expectedResult.recommendedBudget,
+      )
 
-    const expectedResponse = {
-      message: '정상적으로 추천 예산이 생성되었습니다.',
-      recommendedBudget: {
-        '1': 800,
-        '2': 9600,
-        '3': 12000,
-        '4': 6000,
-        '5': 22000,
-        '6': 18600,
-        '7': 18600,
-        '8': 13000,
-        '9': 18600,
-        '10': 16800,
-        '11': 74600,
-        '12': 24200,
-        '13': 16800,
-        '14': 12000,
-        '15': 111800,
-        '16': 1200,
-        '17': 5800,
-        '18': 4400,
-      },
-    }
+      const result = await budgetService.recommendBudget(reqRecommendBudgetDto)
 
-    mockBudgetRespositroy.getMonthlyBudgetRatio.mockResolvedValue(mockRatio)
+      expect(result).toEqual(expectedResult)
+      expect(budgetRepository.getMonthlyBudgetRatio).toHaveBeenCalledWith(
+        new Date(reqRecommendBudgetDto.month),
+        reqRecommendBudgetDto.userId,
+      )
+      expect(calculateRecommendedBudget).toHaveBeenCalledWith(
+        findBudgetRatio,
+        expect.any(Function),
+      )
+    })
+  })
 
-    await expect(service.recommendBudget(mockReq)).resolves.toEqual(
-      expectedResponse,
-    )
+  describe('monthlyBudget', () => {
+    it('should return monthly budget successfully', async () => {
+      budgetRepository.findMonthlyBudget.mockResolvedValue(
+        expectedMonthlyBudget,
+      )
+
+      const result = await budgetService.monthlyBudget(reqGetMonthlyBudgetDto)
+
+      expect(result).toEqual(expectedMonthlyBudget)
+      expect(budgetRepository.findMonthlyBudget).toHaveBeenCalledWith(
+        reqGetMonthlyBudgetDto.userId,
+        new Date(reqGetMonthlyBudgetDto.month),
+      )
+    })
+
+    it('should throw NotFoundException if monthly budget does not exist', async () => {
+      budgetRepository.findMonthlyBudget.mockResolvedValue([])
+
+      await expect(
+        budgetService.monthlyBudget(reqGetMonthlyBudgetDto),
+      ).rejects.toThrow(NotFoundException)
+    })
   })
 })

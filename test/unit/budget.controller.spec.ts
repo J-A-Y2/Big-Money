@@ -126,7 +126,7 @@ describe('BudgetController', () => {
         {
           id: 1,
           amount: 1220,
-          month: '2024-01',
+          month: new Date(),
           created_at: new Date(),
           updated_at: new Date(),
           classification: new Classification(),
