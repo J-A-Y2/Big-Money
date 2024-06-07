@@ -95,14 +95,7 @@ export class ExpenseService implements IExpenseService {
       yearMonth,
     )
 
-    const result = expenses.map((expense) => ({
-      id: expense.id,
-      date: expense.date,
-      amount: expense.amount,
-      classification: expense.classification.classification,
-    }))
-
-    return result
+    return expenses
   }
 
   async getExpense(
@@ -110,6 +103,9 @@ export class ExpenseService implements IExpenseService {
     userId: string,
   ): Promise<ResDetailExpenseDto> {
     const result = await this.expenseRepository.getExpense(userId, expenseId)
+    if (!result) {
+      throw new NotFoundException('지출 항목을 찾을 수 없습니다.')
+    }
     return result
   }
 
@@ -132,8 +128,7 @@ export class ExpenseService implements IExpenseService {
 
     return budget[0].id
   }
-
-  private calculateTotalExpenseByClassification(
+  calculateTotalExpenseByClassification(
     expenses: ResClassificationExpenseDto[],
   ): ResClassificationExpenseDto[] {
     // 키를 가지는 객체로 초기화 후 result에 매핑하여 즉시 expense에 할당

@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsInt, IsObject, IsNumber } from 'class-validator'
+import { IsNotEmpty, IsObject, IsNumber } from 'class-validator'
 import {
   IsClassificationId,
   IsInteger,
