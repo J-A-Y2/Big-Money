@@ -29,5 +29,6 @@
       "@budget/*": ["src/budget/*"],
       "@email/*": ["src/email/*"]
     }
-  }
+  },
+  "exclude": ["**.test.ts"]
 }

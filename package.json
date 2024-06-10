@@ -54,6 +54,7 @@
     "pm2": "^5.3.1",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
+    "ts-mockito": "^2.6.1",
     "typeorm": "^0.3.17",
     "typeorm-naming-strategies": "^4.1.0",
     "useragent": "^2.3.0",
@@ -61,6 +62,8 @@
     "winston-daily-rotate-file": "^4.7.1"
   },
   "devDependencies": {
+    "@automock/adapters.nestjs": "^2.1.0",
+    "@automock/jest": "^2.1.0",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",

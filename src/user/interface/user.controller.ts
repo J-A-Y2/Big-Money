@@ -16,7 +16,10 @@ import {
 } from '@nestjs/common'
 import { ReqRegisterDto, ReqUpdateDto } from './dto/registerUserDto'
 import { IUSER_SERVICE } from '@common/constants/provider.constant'
-import { IUserService } from '@user/domain/interface/user.service.interface'
+import {
+  CreateUser,
+  IUserService,
+} from '@user/domain/interface/user.service.interface'
 import { JwtAuthGuard } from '@auth/infra/passport/guards/jwt.guard'
 import { CurrentUser } from '@common/decorators/user.decorator'
 import {
@@ -44,8 +47,8 @@ export class UserController {
   @ApiCreatedResponse({ description: 'success' })
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async register(@Body() body: ReqRegisterDto): Promise<void> {
-    await this.userService.register(body)
+  async register(@Body() body: ReqRegisterDto): Promise<CreateUser> {
+    return await this.userService.register(body)
   }
 
   @ApiOperation({

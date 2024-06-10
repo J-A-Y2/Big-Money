@@ -8,6 +8,7 @@ import {
   ReqExpenseDto,
   ResClassificationExpenseDto,
   ResDetailExpenseDto,
+  ResGetExpenseDto,
   UpdateExpenseDto,
 } from '@expense/domain/dto/expense.app.dto'
 
@@ -97,7 +98,7 @@ export class ExpenseRepository implements IExpenseRepository {
     return weeklyExpenses
   }
 
-  async getAllExpense(userId: string, date: Date): Promise<Expense[]> {
+  async getAllExpense(userId: string, date: Date): Promise<ResGetExpenseDto[]> {
     try {
       const formattedDate = date.toISOString().slice(0, 7) // YYYY-MM format ISO 형식(YYYY-MM-DDTHH:mm:ss.sssZ)
       const getAllExpense = await this.expenseRepository
@@ -109,9 +110,16 @@ export class ExpenseRepository implements IExpenseRepository {
         .andWhere('expense.user.id = :userId', { userId })
         .getMany()
 
-      const expenses: Expense[] = plainToInstance(Expense, getAllExpense)
-
-      return expenses
+      const simplifiedExpenses: ResGetExpenseDto[] = getAllExpense.map(
+        (expense) => ({
+          id: expense.id,
+          date: expense.date,
+          amount: expense.amount,
+          classification: expense.classification.classification,
+        }),
+      )
+      // console.log('expenses', simplifiedExpenses)
+      return simplifiedExpenses
     } catch (error) {
       // error handling
     }

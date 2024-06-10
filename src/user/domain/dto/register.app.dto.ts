@@ -5,7 +5,7 @@ export class ReqRegisterAppDto {
   readonly password: string
   readonly name: string
   readonly nickname: string
-  readonly birthdate: Date
+  readonly birthdate: string
   readonly age: number
   readonly gender: string
 }

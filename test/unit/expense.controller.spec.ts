@@ -1,249 +1,178 @@
-import { Test, TestingModule } from '@nestjs/testing'
+import { TestBed } from '@automock/jest'
 import { ExpenseController } from '@expense/interface/expense.controller'
-import {
-  IEXPENSE_SERVICE,
-  IRECOMMENDATION_SERVICE,
-} from '@common/constants/provider.constant'
-import { JwtAuthGuard } from '@auth/infra/passport/guards/jwt.guard'
 import { IExpenseService } from '@expense/domain/interface/expense.service.interface'
 import { IRecommendationService } from '@expense/app/recommendation.service.interface'
-import { Request } from 'express'
 import {
+  ReqExpenseDto,
   ResClassificationExpenseDto,
   ResDetailExpenseDto,
   ResGetExpenseDto,
 } from '@expense/domain/dto/expense.app.dto'
+import {
+  IEXPENSE_SERVICE,
+  IRECOMMENDATION_SERVICE,
+} from '@common/constants/provider.constant'
+import { NotFoundException } from '@nestjs/common'
 
 describe('ExpenseController', () => {
-  let controller: ExpenseController
-  let mockExpenseService: IExpenseService
-  let mockRecommendationService: IRecommendationService
+  let expenseController: ExpenseController
+  let expenseService: jest.Mocked<IExpenseService>
+  let recommendationService: jest.Mocked<IRecommendationService>
+
+  const reqExpenseDto: ReqExpenseDto = {
+    userId: 'testUserId',
+    amount: 1000,
+    classificationId: 1,
+    memo: 'Lunch',
+    date: new Date(),
+    exception: false,
+  }
+
+  const resDetailExpenseDto: ResDetailExpenseDto = {
+    id: 1,
+    date: new Date(),
+    amount: 15000,
+    memo: '병원진료',
+  }
+
+  const userId = 'testUser'
+  const month = '2024-01'
 
   beforeEach(async () => {
-    mockExpenseService = {
-      createExpense: jest.fn(),
-      getMonthlyExpense: jest.fn(),
-      getAllExpense: jest.fn(),
-      getTotalExpenseByClassification: jest.fn(),
-      getExpense: jest.fn(),
-    }
+    const { unit, unitRef } = TestBed.create(ExpenseController).compile()
+    expenseController = unit
+    expenseService = unitRef.get(IEXPENSE_SERVICE)
+    recommendationService = unitRef.get(IRECOMMENDATION_SERVICE)
+  })
 
-    mockRecommendationService = {
-      recommendExpenditure: jest.fn(),
-      todayUsage: jest.fn(),
-    }
-
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [ExpenseController],
-      providers: [
-        { provide: IEXPENSE_SERVICE, useValue: mockExpenseService },
-        {
-          provide: IRECOMMENDATION_SERVICE,
-          useValue: mockRecommendationService,
-        },
-      ],
-    })
-      .overrideGuard(JwtAuthGuard)
-      .useValue({ canActivate: jest.fn().mockResolvedValue(true) })
-      .compile()
-
-    controller = module.get<ExpenseController>(ExpenseController)
+  afterEach(() => {
+    jest.clearAllMocks()
   })
 
   it('should be defined', () => {
-    expect(controller).toBeDefined()
+    expect(expenseController).toBeDefined()
   })
 
-  it('should create an expense', async () => {
-    const mockRequest: Request = {
-      user: { id: 'fadc33cf-4361-4385-8528-424402a0e9f1' },
-    } as unknown as Request
+  describe('createExpense', () => {
+    it('should create an expense', async () => {
+      const result = 'Expense created successfully'
+      expenseService.createExpense.mockResolvedValue(result)
 
-    const mockExpenseBody = {
-      userId: mockRequest.user.id,
-      amount: 15000,
-      date: '2023-11-11',
-      memo: '병원진료',
-      exception: false,
-      classificationId: 13,
-    }
-
-    const mockCreatedExpense: string = 'Created expense'
-
-    jest
-      .spyOn(mockExpenseService, 'createExpense')
-      .mockResolvedValue(mockCreatedExpense)
-
-    const result = await controller.createExpense(mockRequest, mockExpenseBody)
-
-    expect(mockExpenseService.createExpense).toHaveBeenCalledWith({
-      userId: mockRequest.user.id,
-      ...mockExpenseBody,
+      expect(await expenseController.createExpense(userId, reqExpenseDto)).toBe(
+        result,
+      )
+      expect(expenseService.createExpense).toHaveBeenCalledWith({
+        userId,
+        ...reqExpenseDto,
+      })
     })
-    expect(result).toEqual(mockCreatedExpense)
   })
 
-  it('should get monthly expenses', async () => {
-    const mockRequest: Request = {
-      user: { id: 'fadc33cf-4361-4385-8528-424402a0e9f1' },
-    } as unknown as Request
+  describe('updateExpense', () => {
+    it('should update an expense', async () => {
+      await expenseController.updateExpense(1, userId, reqExpenseDto)
 
-    const mockMonthlyDto = {
-      userId: mockRequest.user.id,
-      month: '2023-11',
-    }
-
-    const mockMonthlyExpenses: object = {} // Mock monthly expenses object
-
-    jest
-      .spyOn(mockExpenseService, 'getMonthlyExpense')
-      .mockResolvedValue(mockMonthlyExpenses)
-
-    const result = await controller.getMonthlyExpense(
-      mockRequest,
-      mockMonthlyDto,
-    )
-
-    expect(mockExpenseService.getMonthlyExpense).toHaveBeenCalledWith({
-      userId: mockRequest.user.id,
-      ...mockMonthlyDto,
+      expect(expenseService.updateExpense).toHaveBeenCalledWith(
+        1,
+        userId,
+        reqExpenseDto,
+      )
     })
-    expect(result).toEqual(mockMonthlyExpenses)
   })
 
-  it('should get all expenses', async () => {
-    const mockRequest: Request = {
-      user: { id: 'fadc33cf-4361-4385-8528-424402a0e9f1' },
-    } as unknown as Request
+  describe('getRecommendExpenditure', () => {
+    it('should return recommended expenditure', async () => {
+      const result = { recommendation: 'Spend wisely' }
+      recommendationService.recommendExpenditure.mockResolvedValue(result)
 
-    const mockMonthlyDto = {
-      userId: mockRequest.user.id,
-      month: '2023-11',
-    }
-
-    const mockAllExpenses: ResGetExpenseDto[] = [] // Mock all expenses array
-
-    jest
-      .spyOn(mockExpenseService, 'getAllExpense')
-      .mockResolvedValue(mockAllExpenses)
-
-    const result = await controller.getAllExpense(mockRequest, mockMonthlyDto)
-
-    expect(mockExpenseService.getAllExpense).toHaveBeenCalledWith({
-      userId: mockRequest.user.id,
-      ...mockMonthlyDto,
+      expect(
+        await expenseController.getRecommendExpenditure(userId, month),
+      ).toBe(result)
+      expect(recommendationService.recommendExpenditure).toHaveBeenCalledWith({
+        userId,
+        month,
+      })
     })
-    expect(result).toEqual(mockAllExpenses)
   })
 
-  it('should get total expenses by classification', async () => {
-    const mockRequest: Request = {
-      user: { id: 'fadc33cf-4361-4385-8528-424402a0e9f1' },
-    } as unknown as Request
+  describe('getTodayUsage', () => {
+    it('should return today usage', async () => {
+      const result = { usage: 5000 }
+      recommendationService.todayUsage.mockResolvedValue(result)
 
-    const mockMonthlyDto = {
-      userId: mockRequest.user.id,
-      month: '2023-11',
-    }
-
-    const mockClassificationExpenses: ResClassificationExpenseDto[] = []
-    jest
-      .spyOn(mockExpenseService, 'getTotalExpenseByClassification')
-      .mockResolvedValue(mockClassificationExpenses)
-
-    const result = await controller.getTotalExpenseByClassification(
-      mockRequest,
-      mockMonthlyDto,
-    )
-
-    expect(
-      mockExpenseService.getTotalExpenseByClassification,
-    ).toHaveBeenCalledWith({
-      userId: mockRequest.user.id,
-      ...mockMonthlyDto,
+      expect(await expenseController.getTodayUsage(userId, month)).toBe(result)
+      expect(recommendationService.todayUsage).toHaveBeenCalledWith({
+        userId,
+        month,
+      })
     })
-    expect(result).toEqual(mockClassificationExpenses)
   })
 
-  it('should get an expense by ID', async () => {
-    const mockRequest: Request = {
-      user: { id: 'fadc33cf-4361-4385-8528-424402a0e9f1' },
-    } as unknown as Request
+  describe('getMonthlyExpense', () => {
+    it('should return monthly expense', async () => {
+      const result = { '1월 총 지출': 100000 }
+      expenseService.getMonthlyExpense.mockResolvedValue(result)
 
-    const mockExpenseId = 1 // Mock expense ID
-
-    const mockDetailExpense: ResDetailExpenseDto = {
-      id: 1,
-      date: undefined,
-      amount: 2000,
-      memo: '',
-    } // Mock detail expense object
-
-    jest
-      .spyOn(mockExpenseService, 'getExpense')
-      .mockResolvedValue(mockDetailExpense)
-
-    const result = await controller.getExpense(mockRequest, mockExpenseId)
-
-    expect(mockExpenseService.getExpense).toHaveBeenCalledWith(
-      mockExpenseId,
-      mockRequest.user.id,
-    )
-    expect(result).toEqual(mockDetailExpense)
-  })
-
-  it('should recommend expenditure', async () => {
-    const mockRequest: Request = {
-      user: { id: 'fadc33cf-4361-4385-8528-424402a0e9f1' },
-    } as unknown as Request
-
-    const mockMonthlyDto = {
-      userId: mockRequest.user.id,
-      month: '2023-11',
-    }
-
-    const mockRecommendationResult = {} // Mock recommendation result
-
-    jest
-      .spyOn(mockRecommendationService, 'recommendExpenditure')
-      .mockResolvedValue(mockRecommendationResult)
-
-    const result = await controller.getRecommendExpenditure(
-      mockRequest,
-      mockMonthlyDto,
-    )
-
-    expect(mockRecommendationService.recommendExpenditure).toHaveBeenCalledWith(
-      {
-        userId: mockRequest.user.id,
-        ...mockMonthlyDto,
-      },
-    )
-    expect(result).toEqual(mockRecommendationResult)
-  })
-
-  it('should get today usage', async () => {
-    const mockRequest: Request = {
-      user: { id: 'fadc33cf-4361-4385-8528-424402a0e9f1' },
-    } as unknown as Request
-
-    const mockMonthlyDto = {
-      userId: mockRequest.user.id,
-      month: '2023-11',
-    }
-
-    const mockTodayUsageResult = {} // Mock today usage result
-
-    jest
-      .spyOn(mockRecommendationService, 'todayUsage')
-      .mockResolvedValue(mockTodayUsageResult)
-
-    const result = await controller.getTodayUsage(mockRequest, mockMonthlyDto)
-
-    expect(mockRecommendationService.todayUsage).toHaveBeenCalledWith({
-      userId: mockRequest.user.id,
-      ...mockMonthlyDto,
+      expect(await expenseController.getMonthlyExpense(userId, month)).toBe(
+        result,
+      )
+      expect(expenseService.getMonthlyExpense).toHaveBeenCalledWith({
+        userId,
+        month,
+      })
     })
-    expect(result).toEqual(mockTodayUsageResult)
+  })
+
+  describe('getAllExpense', () => {
+    it('should return all expenses for the month', async () => {
+      const result: ResGetExpenseDto[] = [
+        {
+          id: 1,
+          date: new Date(),
+          amount: 15000,
+          classification: '의료/건강',
+        },
+      ]
+      expenseService.getAllExpense.mockResolvedValue(result)
+
+      expect(await expenseController.getAllExpense(userId, month)).toBe(result)
+      expect(expenseService.getAllExpense).toHaveBeenCalledWith({
+        userId,
+        month,
+      })
+    })
+  })
+
+  describe('getTotalExpenseByClassification', () => {
+    it('should return total expenses by classification', async () => {
+      const result: ResClassificationExpenseDto[] = [
+        {
+          classificationId: 1,
+          total: '0',
+        },
+      ]
+      expenseService.getTotalExpenseByClassification.mockResolvedValue(result)
+
+      expect(
+        await expenseController.getTotalExpenseByClassification(userId, month),
+      ).toBe(result)
+      expect(
+        expenseService.getTotalExpenseByClassification,
+      ).toHaveBeenCalledWith({
+        userId,
+        month,
+      })
+    })
+  })
+
+  describe('getExpense', () => {
+    it('should return an expense detail', async () => {
+      expenseService.getExpense.mockResolvedValue(resDetailExpenseDto)
+
+      expect(await expenseController.getExpense(userId, 1)).toBe(
+        resDetailExpenseDto,
+      )
+      expect(expenseService.getExpense).toHaveBeenCalledWith(1, userId)
+    })
   })
 })
