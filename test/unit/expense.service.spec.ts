@@ -2,7 +2,6 @@ import { TestBed } from '@automock/jest'
 import { ExpenseService } from '@expense/app/expense.service'
 import { IExpenseRepository } from '@expense/domain/interface/expense.repository.interface'
 import { IBudgetRepository } from '@budget/domain/interface/budget.repository.interface'
-import { IHandleDateTime } from '@common/interfaces/IHandleDateTime'
 import { NotFoundException } from '@nestjs/common'
 import {
   ReqExpenseDto,
@@ -14,10 +13,7 @@ import {
 import {
   IBUDGET_REPOSITORY,
   IEXPENSE_REPOSITORY,
-  IHANDLE_DATE_TIME,
 } from '@common/constants/provider.constant'
-import { Expense } from '@expense/infra/db/expense.entity'
-import { plainToInstance } from 'class-transformer'
 
 describe('ExpenseService', () => {
   let expenseService: ExpenseService
