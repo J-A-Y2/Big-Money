@@ -1,17 +1,32 @@
-FROM node:18.16.0
+# Build stage
+FROM node:18 as build
 
-WORKDIR /app
-COPY package.json ./
-COPY package-lock.json ./
-COPY ./dist ./dist
+# Working directory 설정
+WORKDIR /usr/src/app
 
-RUN npm config set fetch-retries 10
-RUN npm config set fetch-retry-mintimeout 60000
+# Package 파일을 복사하고 의존성 설치
+COPY package*.json ./
+RUN npm install
 
-RUN npm install -g pm2 
-
+# 소스 코드를 복사하고 빌드
 COPY . .
+RUN npm run build
 
+# Production stage
+FROM node:18 as production
+
+# Working directory 설정
+WORKDIR /usr/src/app
+
+# 빌드 단계에서 생성된 파일을 복사
+COPY --from=build /usr/src/app/dist ./dist
+COPY --from=build /usr/src/app/package*.json ./
+
+# 프로덕션 의존성만 설치
+RUN npm install --only=production
+
+# 포트 노출
 EXPOSE 3000
 
-CMD ["pm2-runtime", "node", "start", "dist/main.js"]
+# 애플리케이션 실행
+CMD ["node", "dist/main"]
