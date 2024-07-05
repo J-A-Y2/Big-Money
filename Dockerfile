@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18 as build
+FROM node:20-alpine as build
 
 # Working directory 설정
 WORKDIR /usr/src/app
@@ -13,7 +13,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:18 as production
+FROM node:20-alpine as production
 
 # Working directory 설정
 WORKDIR /usr/src/app
@@ -22,7 +22,7 @@ WORKDIR /usr/src/app
 COPY --from=build /usr/src/app/dist ./dist
 COPY --from=build /usr/src/app/package*.json ./
 
-# 프로덕션 의존성만 설치
+# 프로덕션 의존성만 설치 (불필요한 파일 제거 -> 파일 용량 줄임)
 RUN npm install --only=production
 
 # 포트 노출
