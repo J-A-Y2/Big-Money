@@ -1,4 +1,4 @@
-import { NestApplication, NestFactory } from '@nestjs/core'
+import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
 import { ConfigService } from '@nestjs/config'
 import { ValidationPipe, Logger } from '@nestjs/common'
@@ -6,7 +6,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import * as cookieParser from 'cookie-parser'
 import { HttpExceptionFilter } from './httpException.filter'
 import { NestExpressApplication } from '@nestjs/platform-express'
-import path from 'path'
 
 declare const module: any
 

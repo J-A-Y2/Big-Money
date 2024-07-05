@@ -59,7 +59,8 @@
     "typeorm-naming-strategies": "^4.1.0",
     "useragent": "^2.3.0",
     "winston": "^3.11.0",
-    "winston-daily-rotate-file": "^4.7.1"
+    "winston-daily-rotate-file": "^4.7.1",
+    "nodemailer": "^6.9.13"
   },
   "devDependencies": {
     "@automock/adapters.nestjs": "^2.1.0",
@@ -81,7 +82,6 @@
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
     "jest": "^29.5.0",
-    "nodemailer": "^6.9.13",
     "prettier": "^3.0.0",
     "run-script-webpack-plugin": "^0.2.0",
     "source-map-support": "^0.5.21",
